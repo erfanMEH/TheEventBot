@@ -74,18 +74,28 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'session_esfahan':
         context.user_data["city"] = "esfahan"
         context.user_data["ready_for_receipt"] = True
+        message = (
+            "مهدکودک‌بزرگترها اصفهان\n\n"
+            "👫مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
+            "📅زمان:\n۸ آبان ۱۴۰۴\nساعت ۱۸ الی ۲۱\n\n"
+            "📍مکان:\nاستودیو یوگا پرانا (خیابان کارگر)\n\n"
+            "☁️ هزینه: ۴۵۰ هزارتومان\n\n"
+            "🔸شرایط ثبت نام با تخفیف:\n"
+            "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
+            "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
+        )
         keyboard = [
             [InlineKeyboardButton("ارسال فیش ثبت‌نام", callback_data='start_receipt')],
+            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
         ]
-        await query.edit_message_text(RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == 'start_receipt':
         context.user_data["ready_for_receipt"] = True
         await query.edit_message_text(RECEIPT_MESSAGE,
                                       reply_markup=InlineKeyboardMarkup([
-                                          [InlineKeyboardButton("بازگشت", callback_data='session_esfahan')],
                                           [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
                                           [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
                                       ]))
@@ -100,6 +110,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    "📍 مکان:\nهر رویداد در فضای متفاوتی برگزار میشه که بعد از مشخص شدن تاریخ اعلام می‌کنیم.\n\n"
                    "☁️ هزینه:\nواریز هزینه و ثبت‌نام هم بعد از مشخص شدن تاریخ و مکان برگزاری به اطلاع کسانی که می‌خوان ثبت‌نام کنن می‌رسه.")
         keyboard = [
+            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
         ]
@@ -108,22 +119,44 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'support':
         await query.edit_message_text(
             f"اگه سوالی داشتی یا نیاز به کمک داشتی، با آیدی @{SUPPORT_USERNAME} تماس بگیر 💌",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]])
+            reply_markup=support_back_channel('event_kindergarten')
         )
 
     elif query.data == 'close_registration_esfahan':
         registration_closed_esfahan = True
-        await query.edit_message_text("❌ ثبت‌نام برای رویداد اصفهان بسته شد.")
+        await query.edit_message_text("❌ ثبت‌نام برای رویداد اصفهان بسته شد.",
+                                      reply_markup=support_back_channel('event_kindergarten'))
 
     elif query.data == 'open_registration_esfahan':
         registration_closed_esfahan = False
         await query.edit_message_text(RECEIPT_MESSAGE,
                                       reply_markup=InlineKeyboardMarkup([
                                           [InlineKeyboardButton("ارسال فیش ثبت‌نام", callback_data='start_receipt')],
+                                          [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
                                           [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
                                           [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
                                       ]))
-        
+
+    elif query.data.startswith("confirm_"):
+        user_id = int(query.data.split("_")[1])
+        await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
+
+    elif query.data.startswith("reject_info_"):
+        user_id = int(query.data.split("_")[2])
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="❌ ثبت‌نام شما رد شد. اطلاعات ارسال‌شده ناقص بود.",
+            reply_markup=support_back_channel('event_kindergarten')
+        )
+
+    elif query.data.startswith("reject_amount_"):
+        user_id = int(query.data.split("_")[2])
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="❌ ثبت‌نام شما رد شد. مبلغ واریزی صحیح نبود.",
+            reply_markup=support_back_channel('event_kindergarten')
+        )
+
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
     ready = context.user_data.get("ready_for_receipt", False)
@@ -165,15 +198,9 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
 
-# ==========================
-# تنظیم دستور /start
-# ==========================
 async def set_bot_commands(app):
     await app.bot.set_my_commands([BotCommand("start", "شروع ربات")])
 
-# ==========================
-# اجرای ربات
-# ==========================
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler('start', start))
@@ -189,3 +216,5 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
+
+

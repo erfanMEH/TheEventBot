@@ -1,5 +1,6 @@
 import os
 import asyncio
+import jdatetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
@@ -7,8 +8,8 @@ from telegram.ext import (
 )
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "8486591461"))  # 👈 تغییر داده شد
-SUPPORT_USERNAME = 'MahdeKoodakSupport'  # 👈 تغییر داده شد
+ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "8486591461"))
+SUPPORT_USERNAME = 'MahdeKoodakSupport'
 CHANNEL_USERNAME = 'bigkidkindergarten'
 
 CARD_NUMBER = '6219861815202733'
@@ -16,12 +17,14 @@ CARD_OWNER = 'ثمین دهقانی'
 
 registration_closed_esfahan = False
 
+
 def support_back_channel(callback_data):
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("بازگشت", callback_data=callback_data)],
         [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ])
+
 
 RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
@@ -35,6 +38,7 @@ RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزی�
 
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -53,6 +57,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(greeting, reply_markup=reply_markup)
     elif update.callback_query:
         await update.callback_query.edit_message_text(greeting, reply_markup=reply_markup)
+
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global registration_closed_esfahan
@@ -138,33 +143,28 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-   elif query.data.startswith("confirm_"):
+    # ✅ تایید فیش با تاریخ و ساعت شمسی
+    elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
+        await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
 
-        # ارسال پیام تأیید برای کاربر
-        await context.bot.send_message(
-            chat_id=user_id,
-            text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱"
-        )
+        current_caption = query.message.caption or ""
 
-        # کپشن فعلی رو می‌گیریم
-        current_message = query.message
-        current_caption = current_message.caption or ""
+        # گرفتن تاریخ و ساعت فعلی شمسی
+        now = jdatetime.datetime.now()
+        date_str = f"{now.day} {now.strftime('%B')} {now.year}"
+        time_str = now.strftime("%H:%M")
 
-        # اضافه کردن برچسب تأیید به کپشن
-        if "✅ تأیید شد" not in current_caption:
-            new_caption = current_caption + "\n\n✅ تأیید شد"
-        else:
-            new_caption = current_caption  # در صورت وجود تکرار نشه
+        new_caption = f"{current_caption}\n\n✅ تأیید شد در تاریخ {date_str} - ساعت {time_str}"
 
-        # ویرایش پیام برای حذف دکمه‌ها و آپدیت کپشن
         try:
-            await query.edit_message_caption(
-                caption=new_caption,
-                reply_markup=None
-            )
-        except Exception as e:
-            print("Error editing caption:", e)
+            await query.edit_message_caption(caption=new_caption)
+        except:
+            pass
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except:
+            pass
 
     elif query.data.startswith("reject_info_"):
         user_id = int(query.data.split("_")[2])
@@ -203,6 +203,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_reply_markup(reply_markup=None)
         except:
             pass
+
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
@@ -250,8 +251,10 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
     )
 
+
 async def set_bot_commands(app):
     await app.bot.set_my_commands([BotCommand("start", "شروع ربات")])
+
 
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -264,8 +267,8 @@ async def main():
     print("ربات در حال اجراست...")
     await app.run_polling()
 
-if __name__ == '__main__':
+
+if _name_ == '_main_':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-

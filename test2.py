@@ -190,7 +190,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             pass
 
-elif query.data.startswith("reject_amount_"):
+   elif query.data.startswith("reject_amount_"):
         user_id = int(query.data.split("_")[2])
         await context.bot.send_message(
             chat_id=user_id,
@@ -277,3 +277,4 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
+

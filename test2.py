@@ -192,6 +192,14 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
     ready = context.user_data.get("ready_for_receipt", False)
 
+    if city == "tehran":
+        await update.message.reply_text(
+            "هنوز رویدادی برای تهران برنامه‌ریزی نشده.\n"
+            "اگر برای رویداد اصفهان ثبت‌نام کردید، نهایی کردن ثبت‌نام رو با انتخاب رویداد اصفهان انجام داده و دوباره فیش را ارسال کنید 🌱",
+            reply_markup=support_back_channel('event_kindergarten')
+        )
+        return
+
     if city != "esfahan" or not ready or registration_closed_esfahan:
         await update.message.reply_text(
             "❌ ثبت‌نام برای رویداد اصفهان بسته شده یا مسیر ثبت‌نام کامل طی نشده.",
@@ -199,6 +207,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # ✅ این بخش باید خارج از شرط‌ها باشه تا اجرا بشه
     photo = update.message.photo[-1]
     caption = update.message.caption or "بدون کپشن"
     user = update.message.from_user
@@ -244,3 +253,4 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
+

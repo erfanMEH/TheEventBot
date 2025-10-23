@@ -1,13 +1,12 @@
 import os
 import asyncio
 import jdatetime
-import pytz
-from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
     MessageHandler, filters, ContextTypes
 )
+from datetime import timedelta
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "8486591461"))
@@ -145,22 +144,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    # ✅ تایید فیش با تاریخ و ساعت شمسی ایران (تهران)
+    # ✅ تایید فیش با تاریخ شمسی بدون ساعت
     elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
         await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
 
         current_caption = query.message.caption or ""
 
-        # گرفتن زمان دقیق تهران
-        tehran_tz = pytz.timezone("Asia/Tehran")
-        now = datetime.now(tehran_tz)
-        now_j = jdatetime.datetime.fromgregorian(datetime=now)
+        # گرفتن تاریخ فعلی شمسی (تهران)
+        now = jdatetime.datetime.now()  # می‌تونی timezone تهران اضافه کنی اگر نیاز بود
+        date_str = f"{now.day} {now.strftime('%B')} {now.year}"
 
-        date_str = f"{now_j.day} {now_j.strftime('%B')} {now_j.year}"
-        time_str = now_j.strftime("%H:%M")
-
-        new_caption = f"{current_caption}\n\n✅ تأیید شد در تاریخ {date_str} - ساعت {time_str}"
+        new_caption = f"{current_caption}\n\n✅ تأیید شد در تاریخ {date_str}"
 
         try:
             await query.edit_message_caption(caption=new_caption)
@@ -273,9 +268,7 @@ async def main():
     await app.run_polling()
 
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-
-

@@ -1,6 +1,8 @@
 import os
 import asyncio
 import jdatetime
+import pytz
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
@@ -143,17 +145,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    # ✅ تایید فیش با تاریخ و ساعت شمسی
+    # ✅ تایید فیش با تاریخ و ساعت شمسی ایران (تهران)
     elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
         await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
 
         current_caption = query.message.caption or ""
 
-        # گرفتن تاریخ و ساعت فعلی شمسی
-        now = jdatetime.datetime.now()
-        date_str = f"{now.day} {now.strftime('%B')} {now.year}"
-        time_str = now.strftime("%H:%M")
+        # گرفتن زمان دقیق تهران
+        tehran_tz = pytz.timezone("Asia/Tehran")
+        now = datetime.now(tehran_tz)
+        now_j = jdatetime.datetime.fromgregorian(datetime=now)
+
+        date_str = f"{now_j.day} {now_j.strftime('%B')} {now_j.year}"
+        time_str = now_j.strftime("%H:%M")
 
         new_caption = f"{current_caption}\n\n✅ تأیید شد در تاریخ {date_str} - ساعت {time_str}"
 
@@ -185,7 +190,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             pass
 
-    elif query.data.startswith("reject_amount_"):
+elif query.data.startswith("reject_amount_"):
         user_id = int(query.data.split("_")[2])
         await context.bot.send_message(
             chat_id=user_id,
@@ -272,4 +277,3 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-

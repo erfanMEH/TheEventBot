@@ -140,22 +140,31 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
         await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
+        await query.edit_message_reply_markup(reply_markup=None)
 
     elif query.data.startswith("reject_info_"):
         user_id = int(query.data.split("_")[2])
         await context.bot.send_message(
             chat_id=user_id,
-            text="❌ ثبت‌نام شما رد شد. اطلاعات ارسال‌شده ناقص بود.",
+            text=(
+                "❌ ثبت‌نام شما رد شد چون اطلاعات کپشن کامل نبود.\n"
+                "لطفاً فیش رو دوباره ارسال کنید و در کپشن عکس، نام و نام خانوادگی و شماره تماس رو بنویسید 🌱"
+            ),
             reply_markup=support_back_channel('event_kindergarten')
         )
+        await query.edit_message_reply_markup(reply_markup=None)
 
     elif query.data.startswith("reject_amount_"):
         user_id = int(query.data.split("_")[2])
         await context.bot.send_message(
             chat_id=user_id,
-            text="❌ ثبت‌نام شما رد شد. مبلغ واریزی صحیح نبود.",
+            text=(
+                "❌ ثبت‌نام شما رد شد چون مبلغ واریزی با تعرفه‌ی رویداد هماهنگ نبود.\n"
+                "برای بررسی و تأیید نهایی، لطفاً با پشتیبانی تماس بگیرید 💌"
+            ),
             reply_markup=support_back_channel('event_kindergarten')
         )
+        await query.edit_message_reply_markup(reply_markup=None)
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
@@ -196,6 +205,10 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
         ])
+    )
+
+    await update.message.reply_text(
+        "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
     )
 
 async def set_bot_commands(app):

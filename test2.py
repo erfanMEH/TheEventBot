@@ -11,10 +11,6 @@ ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "6687139776"))
 SUPPORT_USERNAME = 'samin_dh'
 CHANNEL_USERNAME = 'bigkidkindergarten'
 
-confirmed_users_esfahan = set()
-registration_closed_esfahan = False
-MAX_CAPACITY_ESFAHAN = None
-
 CARD_NUMBER = '6219861815202733'
 CARD_OWNER = 'ثمین دهقانی'
 
@@ -57,7 +53,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.edit_message_text(greeting, reply_markup=reply_markup)
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global registration_closed_esfahan
     query = update.callback_query
     await query.answer()
 
@@ -122,24 +117,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    elif query.data == 'close_registration_esfahan':
-        registration_closed_esfahan = True
-        await query.edit_message_text("❌ ثبت‌نام برای رویداد اصفهان بسته شد.",
-                                      reply_markup=support_back_channel('event_kindergarten'))
-
-    elif query.data == 'open_registration_esfahan':
-        registration_closed_esfahan = False
-        await query.edit_message_text(RECEIPT_MESSAGE,
-                                      reply_markup=InlineKeyboardMarkup([
-                                          [InlineKeyboardButton("ارسال فیش ثبت‌نام", callback_data='start_receipt')],
-                                          [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
-                                          [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
-                                          [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
-                                      ]))
-
     elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
         await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
+        await query.edit_message_caption(caption="✅ این فیش تأیید شد")
         await query.edit_message_reply_markup(reply_markup=None)
 
     elif query.data.startswith("reject_info_"):
@@ -152,6 +133,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             reply_markup=support_back_channel('event_kindergarten')
         )
+        await query.edit_message_caption(caption="❌ این فیش رد شد (اطلاعات ناقص)")
         await query.edit_message_reply_markup(reply_markup=None)
 
     elif query.data.startswith("reject_amount_"):
@@ -164,6 +146,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             reply_markup=support_back_channel('event_kindergarten')
         )
+        await query.edit_message_caption(caption="❌ این فیش رد شد (مبلغ اشتباه)")
         await query.edit_message_reply_markup(reply_markup=None)
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -200,13 +183,6 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["ready_for_receipt"] = False
 
-    await update.message.reply_text(RECEIPT_MESSAGE,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
-            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
-        ])
-    )
-
     await update.message.reply_text(
         "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
     )
@@ -229,5 +205,3 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-
-

@@ -14,6 +14,8 @@ CHANNEL_USERNAME = 'bigkidkindergarten'
 CARD_NUMBER = '6219861815202733'
 CARD_OWNER = 'ثمین دهقانی'
 
+registration_closed_esfahan = False
+
 def support_back_channel(callback_data):
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("بازگشت", callback_data=callback_data)],
@@ -53,6 +55,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.edit_message_text(greeting, reply_markup=reply_markup)
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global registration_closed_esfahan
     query = update.callback_query
     await query.answer()
 
@@ -88,12 +91,30 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == 'start_receipt':
+        if registration_closed_esfahan:
+            await query.edit_message_text(
+                "❌ ثبت‌نام برای رویداد اصفهان بسته شده.\nبرای اطلاعات بیشتر با پشتیبانی تماس بگیرید 💌",
+                reply_markup=support_back_channel('event_kindergarten')
+            )
+            return
+
         context.user_data["ready_for_receipt"] = True
         await query.edit_message_text(RECEIPT_MESSAGE,
-                                      reply_markup=InlineKeyboardMarkup([
-                                          [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
-                                          [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
-                                      ]))
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+                [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
+            ])
+        )
+
+    elif query.data == 'close_registration_esfahan':
+        registration_closed_esfahan = True
+        await query.edit_message_text("❌ ثبت‌نام برای رویداد اصفهان بسته شد.",
+                                      reply_markup=support_back_channel('event_kindergarten'))
+
+    elif query.data == 'open_registration_esfahan':
+        registration_closed_esfahan = False
+        await query.edit_message_text("✅ ثبت‌نام برای رویداد اصفهان باز شد.",
+                                      reply_markup=support_back_channel('event_kindergarten'))
 
     elif query.data == 'session_tehran':
         context.user_data["city"] = "tehran"
@@ -153,9 +174,9 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
     ready = context.user_data.get("ready_for_receipt", False)
 
-    if city != "esfahan" or not ready:
+    if city != "esfahan" or not ready or registration_closed_esfahan:
         await update.message.reply_text(
-            "❌ لطفاً ابتدا از مسیر ثبت‌نام، شهر رو انتخاب و دکمه «ارسال فیش ثبت‌نام» رو بزنید 🌱",
+            "❌ ثبت‌نام برای رویداد اصفهان بسته شده یا مسیر ثبت‌نام کامل طی نشده.",
             reply_markup=support_back_channel('event_kindergarten')
         )
         return

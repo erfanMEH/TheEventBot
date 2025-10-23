@@ -1,4 +1,5 @@
 import os
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
@@ -8,7 +9,7 @@ from telegram.ext import (
 # ==========================
 # اطلاعات ربات و متغیرها
 # ==========================
-BOT_TOKEN = os.environ.get("BOT_TOKEN")  # امن: از Environment Variable بخون
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "6687139776"))
 SUPPORT_USERNAME = 'samin_dh'
 CHANNEL_USERNAME = 'bigkidkindergarten'
@@ -194,7 +195,6 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["ready_for_receipt"] = False
 
-    # پیام فیش همیشه نمایش داده بشه
     await update.message.reply_text(RECEIPT_MESSAGE,
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
@@ -203,27 +203,19 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ==========================
-# تنظیم دستور /start
-# ==========================
-async def set_bot_commands(app):
-    commands = [BotCommand("start", "شروع ربات")]
-    await app.bot.set_my_commands(commands)
-
-# ==========================
 # اجرای ربات
 # ==========================
-def main():
+async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
-    # تنظیم دستورات بعد از شروع
-    app.post_init = set_bot_commands
-
+    await app.initialize()
+    await app.bot.set_my_commands([BotCommand("start", "شروع ربات")])
     print("ربات در حال اجراست...")
-    app.run_polling()
+    await app.run_polling()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

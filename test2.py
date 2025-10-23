@@ -23,7 +23,7 @@ def support_back_channel(callback_data):
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ])
 
-RECEIPT_MESSAGE = f"""📝 لطفا هزینه رویداد رو طبق دستورالعمل زیر درنظر بگیرید:
+RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
 یک نفر : ۴۵۰ هزارتومان
 دونفر : ۸۵۵ هزارتومان
@@ -83,7 +83,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
         )
         keyboard = [
-            [InlineKeyboardButton("ثبت‌نام", callback_data='start_receipt')],
+            [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt')],
             [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
@@ -134,28 +134,40 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'support':
         await query.edit_message_text(
-            f"اگه سوالی داشتی یا نیاز به کمک داشتی، با آیدی @{SUPPORT_USERNAME} تماس بگیر 💌",
+            "اگه سوالی داشتی یا نیاز به کمک داشتی، با آیدی @samin_dh ارتباط بگیر 💌",
             reply_markup=support_back_channel('event_kindergarten')
         )
 
     elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
         await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
-        await query.edit_message_caption(caption="✅ این فیش تأیید شد")
-        await query.edit_message_reply_markup(reply_markup=None)
+        try:
+            await query.edit_message_caption(caption="✅ این فیش تأیید شد")
+        except:
+            pass
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except:
+            pass
 
     elif query.data.startswith("reject_info_"):
         user_id = int(query.data.split("_")[2])
         await context.bot.send_message(
             chat_id=user_id,
             text=(
-                "❌ ثبت‌نام شما رد شد متاسفانه اطلاعات کپشن کامل نبود.\n"
+                "ثبت‌نام شما رد شد. متاسفانه اطلاعات کپشن کامل نبود.\n"
                 "لطفاً فیش رو دوباره ارسال کنید و در کپشن عکس، نام و نام خانوادگی و شماره تماس رو بنویسید 🌱"
             ),
             reply_markup=support_back_channel('event_kindergarten')
         )
-        await query.edit_message_caption(caption="❌ این فیش رد شد (اطلاعات ناقص)")
-        await query.edit_message_reply_markup(reply_markup=None)
+        try:
+            await query.edit_message_caption(caption="❌ این فیش رد شد (اطلاعات ناقص)")
+        except:
+            pass
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except:
+            pass
 
     elif query.data.startswith("reject_amount_"):
         user_id = int(query.data.split("_")[2])
@@ -167,8 +179,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             reply_markup=support_back_channel('event_kindergarten')
         )
-        await query.edit_message_caption(caption="❌ این فیش رد شد (مبلغ اشتباه)")
-        await query.edit_message_reply_markup(reply_markup=None)
+        try:
+            await query.edit_message_caption(caption="❌ این فیش رد شد (مبلغ اشتباه)")
+        except:
+            pass
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except:
+            pass
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
@@ -226,4 +244,3 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-

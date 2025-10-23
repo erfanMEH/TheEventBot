@@ -23,7 +23,7 @@ def support_back_channel(callback_data):
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ])
 
-RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
+RECEIPT_MESSAGE = f"""📝 لطفا هزینه رویداد رو طبق دستورالعمل زیر درنظر بگیرید:
 
 یک نفر : ۴۵۰ هزارتومان
 دونفر : ۸۵۵ هزارتومان
@@ -83,7 +83,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
         )
         keyboard = [
-            [InlineKeyboardButton("ارسال فیش ثبت‌نام", callback_data='start_receipt')],
+            [InlineKeyboardButton("ثبت‌نام", callback_data='start_receipt')],
             [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
@@ -149,7 +149,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=user_id,
             text=(
-                "❌ ثبت‌نام شما رد شد چون اطلاعات کپشن کامل نبود.\n"
+                "❌ ثبت‌نام شما رد شد متاسفانه اطلاعات کپشن کامل نبود.\n"
                 "لطفاً فیش رو دوباره ارسال کنید و در کپشن عکس، نام و نام خانوادگی و شماره تماس رو بنویسید 🌱"
             ),
             reply_markup=support_back_channel('event_kindergarten')
@@ -162,8 +162,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=user_id,
             text=(
-                "❌ ثبت‌نام شما رد شد چون مبلغ واریزی با تعرفه‌ی رویداد هماهنگ نبود.\n"
-                "برای بررسی و تأیید نهایی، لطفاً با پشتیبانی تماس بگیرید 💌"
+                "❌ ثبت‌نام شما رد شد، مبلغ واریزی با تعرفه‌ی رویداد هماهنگ نبود.\n"
+                "برای بررسی و تأیید نهایی، لطفاً با پشتیبانی ارتباط بگیرید 💌"
             ),
             reply_markup=support_back_channel('event_kindergarten')
         )
@@ -226,3 +226,4 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
+

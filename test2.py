@@ -7,8 +7,8 @@ from telegram.ext import (
 )
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "6687139776"))
-SUPPORT_USERNAME = 'samin_dh'
+ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "8486591461"))  # 👈 تغییر داده شد
+SUPPORT_USERNAME = 'MahdeKoodakSupport'  # 👈 تغییر داده شد
 CHANNEL_USERNAME = 'bigkidkindergarten'
 
 CARD_NUMBER = '6219861815202733'
@@ -134,7 +134,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'support':
         await query.edit_message_text(
-            "اگه سوالی داشتی یا نیاز به کمک داشتی، با آیدی @samin_dh ارتباط بگیر 💌",
+            "اگه سوالی داشتی یا نیاز به کمک داشتی، با آیدی @MahdeKoodakSupport ارتباط بگیر 💌",
             reply_markup=support_back_channel('event_kindergarten')
         )
 
@@ -207,7 +207,6 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # ✅ این بخش باید خارج از شرط‌ها باشه تا اجرا بشه
     photo = update.message.photo[-1]
     caption = update.message.caption or "بدون کپشن"
     user = update.message.from_user
@@ -253,4 +252,3 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-

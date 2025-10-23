@@ -138,17 +138,33 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    elif query.data.startswith("confirm_"):
+   elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
-        await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
+
+        # ارسال پیام تأیید برای کاربر
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱"
+        )
+
+        # کپشن فعلی رو می‌گیریم
+        current_message = query.message
+        current_caption = current_message.caption or ""
+
+        # اضافه کردن برچسب تأیید به کپشن
+        if "✅ تأیید شد" not in current_caption:
+            new_caption = current_caption + "\n\n✅ تأیید شد"
+        else:
+            new_caption = current_caption  # در صورت وجود تکرار نشه
+
+        # ویرایش پیام برای حذف دکمه‌ها و آپدیت کپشن
         try:
-            await query.edit_message_caption(caption="✅ این فیش تأیید شد")
-        except:
-            pass
-        try:
-            await query.edit_message_reply_markup(reply_markup=None)
-        except:
-            pass
+            await query.edit_message_caption(
+                caption=new_caption,
+                reply_markup=None
+            )
+        except Exception as e:
+            print("Error editing caption:", e)
 
     elif query.data.startswith("reject_info_"):
         user_id = int(query.data.split("_")[2])
@@ -252,3 +268,4 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
+

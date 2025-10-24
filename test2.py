@@ -1,9 +1,7 @@
 import os
 import asyncio
 import jdatetime
-from telegram import (
-    Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
-)
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
     MessageHandler, filters, ContextTypes
@@ -14,11 +12,11 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "8486591461"))
 SUPPORT_USERNAME = 'MahdeKoodakSupport'
 CHANNEL_USERNAME = 'bigkidkindergarten'
-
 CARD_NUMBER = '6219861815202733'
 CARD_OWNER = 'ثمین دهقانی'
 
 registration_closed_esfahan = False
+
 
 def support_back_channel(callback_data):
     return InlineKeyboardMarkup([
@@ -27,12 +25,13 @@ def support_back_channel(callback_data):
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ])
 
+
 RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
 یک نفر : ۴۵۰ هزارتومان
 دونفر : ۸۵۵ هزارتومان
 سه نفر: ۱,۲۶۰ هزارتومان
-چهار نفر: ۱,۶۶۵ هزارتومان 
+چهار نفر: ۱,۶۶۵ هزارتومان
 پنج نفر: ۲,۰۷۰ هزارتومان
 
 📤 حالا مبلغ رو به این شماره کارت واریز کن و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
@@ -40,47 +39,29 @@ RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزی�
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
-# 🧹 دستور ریست ادمین (پاک کردن پیام‌ها)
-async def reset_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_chat.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ فقط ادمین می‌تونه از این دستور استفاده کنه.")
-        return
 
-    await update.message.reply_text("🔄 در حال پاک‌سازی پیام‌های بات و ادمین، لطفاً صبر کنید...")
-
-    try:
-        chat = update.effective_chat
-        # گرفتن پیام‌های اخیر (حدود 100 پیام)
-        async for msg in context.bot.get_chat(chat.id).iter_history(limit=100):
-            if msg.from_user and (msg.from_user.is_bot or msg.from_user.id == ADMIN_CHAT_ID):
-                try:
-                    await context.bot.delete_message(chat.id, msg.message_id)
-                except:
-                    continue
-        await context.bot.send_message(chat.id, "✅ همه‌ی پیام‌های بات و ادمین پاک شدند.")
-    except Exception as e:
-        await update.message.reply_text(f"❌ خطا در پاک کردن پیام‌ها: {e}")
-
-# ✅ start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("✨️ از ایونت کدوم شهرمون می‌خوای باخبر بشی؟", callback_data='event_kindergarten')],
         [InlineKeyboardButton("پشتیبانی", callback_data='support')],
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ]
+
     if update.effective_user.id == ADMIN_CHAT_ID:
         keyboard.append([
             InlineKeyboardButton("🔒 بستن ثبت‌نام اصفهان", callback_data='close_registration_esfahan'),
             InlineKeyboardButton("🔓 باز کردن ثبت‌نام اصفهان", callback_data='open_registration_esfahan')
         ])
+
     reply_markup = InlineKeyboardMarkup(keyboard)
     greeting = "سلام 🌱\nخوشحالم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰"
+
     if update.message:
         await update.message.reply_text(greeting, reply_markup=reply_markup)
     elif update.callback_query:
         await update.callback_query.edit_message_text(greeting, reply_markup=reply_markup)
 
-# ✅ button handler
+
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global registration_closed_esfahan
     query = update.callback_query
@@ -93,8 +74,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("پشتیبانی", callback_data='support')],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
         ]
-        await query.edit_message_text("✨️ از ایونت کدوم شهرمون می‌خوای باخبر بشی؟",
-                                      reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text(
+            "✨️ از ایونت کدوم شهرمون می‌خوای باخبر بشی؟",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     elif query.data == 'session_esfahan':
         context.user_data["city"] = "esfahan"
@@ -126,7 +109,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         context.user_data["ready_for_receipt"] = True
-        await query.edit_message_text(RECEIPT_MESSAGE,
+        await query.edit_message_text(
+            RECEIPT_MESSAGE,
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
                 [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
@@ -135,22 +119,35 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'close_registration_esfahan':
         registration_closed_esfahan = True
-        await query.edit_message_text("❌ ثبت‌نام برای رویداد اصفهان بسته شد.",
-                                      reply_markup=support_back_channel('event_kindergarten'))
+        await query.edit_message_text(
+            "❌ ثبت‌نام برای رویداد اصفهان بسته شد.",
+            reply_markup=support_back_channel('event_kindergarten')
+        )
 
     elif query.data == 'open_registration_esfahan':
         registration_closed_esfahan = False
-        await query.edit_message_text("✅ ثبت‌نام برای رویداد اصفهان باز شد.",
-                                      reply_markup=support_back_channel('event_kindergarten'))
+        await query.edit_message_text(
+            "✅ ثبت‌نام برای رویداد اصفهان باز شد.",
+            reply_markup=support_back_channel('event_kindergarten')
+        )
 
     elif query.data == 'session_tehran':
-        message = ("سلام 🌱\nخوشحالیم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰\n\n"
-                   "👫 مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
-                   "📅 زمان:\nدر حال برنامه‌ریزی برای تاریخ بعدی رویدادمون هستیم.\n"
-                   "اطلاع‌رسانی‌ها از طریق کانال ما به آدرس @bigkidkindergarten انجام میشه ✌🏻\n\n"
-                   "📍 مکان:\nهر رویداد در فضای متفاوتی برگزار میشه که بعد از مشخص شدن تاریخ اعلام می‌کنیم.\n\n"
-                   "☁️ هزینه:\nواریز هزینه و ثبت‌نام هم بعد از مشخص شدن تاریخ و مکان برگزاری به اطلاع کسانی که می‌خوان ثبت‌نام کنن می‌رسه.")
-        await query.edit_message_text(message, reply_markup=support_back_channel('event_kindergarten'))
+        context.user_data["city"] = "tehran"
+        context.user_data["ready_for_receipt"] = False
+        message = (
+            "سلام 🌱\nخوشحالیم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰\n\n"
+            "👫 مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
+            "📅 زمان:\nدر حال برنامه‌ریزی برای تاریخ بعدی رویدادمون هستیم.\n"
+            "اطلاع‌رسانی‌ها از طریق کانال ما به آدرس @bigkidkindergarten انجام میشه ✌🏻\n\n"
+            "📍 مکان:\nهر رویداد در فضای متفاوتی برگزار میشه که بعد از مشخص شدن تاریخ اعلام می‌کنیم.\n\n"
+            "☁️ هزینه:\nواریز هزینه و ثبت‌نام هم بعد از مشخص شدن تاریخ و مکان برگزاری به اطلاع کسانی که می‌خوان ثبت‌نام کنن می‌رسه."
+        )
+        keyboard = [
+            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
+        ]
+        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == 'support':
         await query.edit_message_text(
@@ -158,9 +155,73 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
+    # تایید/رد فیش
+    elif query.data.startswith("confirm_"):
+        user_id = int(query.data.split("_")[1])
+        await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
+        current_caption = query.message.caption or ""
+        now = jdatetime.datetime.now()
+        date_str = f"{now.day} {now.strftime('%B')} {now.year}"
+        new_caption = f"{current_caption}\n\n✅ تأیید شد در تاریخ {date_str}"
+        try:
+            await query.edit_message_caption(caption=new_caption)
+        except:
+            pass
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except:
+            pass
+
+    elif query.data.startswith("reject_info_"):
+        user_id = int(query.data.split("_")[2])
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=(
+                "ثبت‌نام شما رد شد. متاسفانه اطلاعات کپشن کامل نبود.\n"
+                "لطفاً فیش رو دوباره ارسال کنید و در کپشن عکس، نام و نام خانوادگی و شماره تماس رو بنویسید 🌱"
+            ),
+            reply_markup=support_back_channel('event_kindergarten')
+        )
+        try:
+            await query.edit_message_caption(caption="❌ این فیش رد شد (اطلاعات ناقص)")
+        except:
+            pass
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except:
+            pass
+
+    elif query.data.startswith("reject_amount_"):
+        user_id = int(query.data.split("_")[2])
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=(
+                "❌ ثبت‌نام شما رد شد، مبلغ واریزی با تعرفه‌ی رویداد هماهنگ نبود.\n"
+                "برای بررسی و تأیید نهایی، لطفاً با پشتیبانی ارتباط بگیرید 💌"
+            ),
+            reply_markup=support_back_channel('event_kindergarten')
+        )
+        try:
+            await query.edit_message_caption(caption="❌ این فیش رد شد (مبلغ اشتباه)")
+        except:
+            pass
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except:
+            pass
+
+
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
     ready = context.user_data.get("ready_for_receipt", False)
+
+    if city == "tehran":
+        await update.message.reply_text(
+            "هنوز رویدادی برای تهران برنامه‌ریزی نشده.\n"
+            "اگر برای رویداد اصفهان ثبت‌نام کردید، نهایی کردن ثبت‌نام رو با انتخاب رویداد اصفهان انجام داده و دوباره فیش را ارسال کنید 🌱",
+            reply_markup=support_back_channel('event_kindergarten')
+        )
+        return
 
     if city != "esfahan" or not ready or registration_closed_esfahan:
         await update.message.reply_text(
@@ -191,18 +252,19 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     context.user_data["ready_for_receipt"] = False
-    await update.message.reply_text("فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم 🌱")
+
+    await update.message.reply_text(
+        "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
+    )
+
 
 async def set_bot_commands(app):
-    await app.bot.set_my_commands([
-        BotCommand("start", "شروع ربات"),
-        BotCommand("reset", "پاک کردن پیام‌های بات و ادمین")
-    ])
+    await app.bot.set_my_commands([BotCommand("start", "شروع ربات")])
+
 
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler('start', start))
-    app.add_handler(CommandHandler('reset', reset_messages))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
@@ -211,7 +273,8 @@ async def main():
     print("ربات در حال اجراست...")
     await app.run_polling()
 
-if __name__ == '__main__':
+
+if _name_ == '_main_':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())

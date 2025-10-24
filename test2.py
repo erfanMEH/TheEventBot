@@ -20,14 +20,12 @@ CARD_OWNER = 'ثمین دهقانی'
 
 registration_closed_esfahan = False
 
-
 def support_back_channel(callback_data):
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("بازگشت", callback_data=callback_data)],
         [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ])
-
 
 RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
@@ -42,26 +40,26 @@ RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزی�
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
-
 # 🧹 دستور ریست ادمین (پاک کردن پیام‌ها)
 async def reset_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.id != ADMIN_CHAT_ID:
         await update.message.reply_text("⛔ فقط ادمین می‌تونه از این دستور استفاده کنه.")
         return
 
-    await update.message.reply_text("🔄 در حال پاک‌سازی پیام‌ها، لطفاً صبر کنید...")
+    await update.message.reply_text("🔄 در حال پاک‌سازی پیام‌های بات و ادمین، لطفاً صبر کنید...")
 
     try:
         chat = update.effective_chat
-        async for msg in context.bot.get_chat_history(chat.id, limit=1000):
-            try:
-                await context.bot.delete_message(chat.id, msg.message_id)
-            except:
-                continue
-        await context.bot.send_message(chat.id, "✅ همه‌ی پیام‌ها پاک شدن.")
+        # گرفتن پیام‌های اخیر (حدود 100 پیام)
+        async for msg in context.bot.get_chat(chat.id).iter_history(limit=100):
+            if msg.from_user and (msg.from_user.is_bot or msg.from_user.id == ADMIN_CHAT_ID):
+                try:
+                    await context.bot.delete_message(chat.id, msg.message_id)
+                except:
+                    continue
+        await context.bot.send_message(chat.id, "✅ همه‌ی پیام‌های بات و ادمین پاک شدند.")
     except Exception as e:
         await update.message.reply_text(f"❌ خطا در پاک کردن پیام‌ها: {e}")
-
 
 # ✅ start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -81,7 +79,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(greeting, reply_markup=reply_markup)
     elif update.callback_query:
         await update.callback_query.edit_message_text(greeting, reply_markup=reply_markup)
-
 
 # ✅ button handler
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -161,7 +158,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
     ready = context.user_data.get("ready_for_receipt", False)
@@ -197,13 +193,11 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["ready_for_receipt"] = False
     await update.message.reply_text("فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم 🌱")
 
-
 async def set_bot_commands(app):
     await app.bot.set_my_commands([
         BotCommand("start", "شروع ربات"),
-        BotCommand("reset", "پاک کردن پیام‌های ادمین")
+        BotCommand("reset", "پاک کردن پیام‌های بات و ادمین")
     ])
-
 
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -217,9 +211,7 @@ async def main():
     print("ربات در حال اجراست...")
     await app.run_polling()
 
-
 if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-

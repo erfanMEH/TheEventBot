@@ -42,7 +42,7 @@ RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزی�
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("✨️ از ایونت کدوم شهرمون می‌خوای باخبر بشی؟", callback_data='event_kindergarten')],
+        [InlineKeyboardButton("✨ کدوم شهرو می‌خوای انتخاب کنی؟", callback_data='event_kindergarten')],
         [InlineKeyboardButton("پشتیبانی", callback_data='support')],
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ]
@@ -71,11 +71,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("اصفهان", callback_data='session_esfahan')],
             [InlineKeyboardButton("تهران", callback_data='session_tehran')],
+            [InlineKeyboardButton("شیراز", callback_data='session_shiraz')],
             [InlineKeyboardButton("پشتیبانی", callback_data='support')],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
         ]
         await query.edit_message_text(
-            "✨️ از ایونت کدوم شهرمون می‌خوای باخبر بشی؟",
+            "✨ کدوم شهرو می‌خوای انتخاب کنی؟",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -85,7 +86,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "مهدکودک‌بزرگترها اصفهان\n\n"
             "👫مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
-            "📅زمان:\n۸ آبان ۱۴۰۴\nساعت ۱۸ الی ۲۱\n\n"
+            "📅زمان:\n۹ آبان ۱۴۰۴\nساعت ۱۸ الی ۲۱\n\n"
             "📍مکان:\nاستودیو یوگا پرانا (خیابان کارگر)\n\n"
             "☁️ هزینه: ۴۵۰ هزارتومان\n\n"
             "🔸شرایط ثبت نام با تخفیف:\n"
@@ -94,6 +95,42 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         keyboard = [
             [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt')],
+            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
+        ]
+        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == 'session_tehran':
+        context.user_data["city"] = "tehran"
+        context.user_data["ready_for_receipt"] = False
+        message = (
+            "سلام 🌱\nخوشحالیم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰\n\n"
+            "👫 مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
+            "📅 زمان:\nدر حال برنامه‌ریزی برای تاریخ بعدی رویدادمون هستیم.\n"
+            "اطلاع‌رسانی‌ها از طریق کانال ما به آدرس @bigkidkindergarten انجام میشه ✌🏻\n\n"
+            "📍 مکان:\nهر رویداد در فضای متفاوتی برگزار میشه که بعد از مشخص شدن تاریخ اعلام می‌کنیم.\n\n"
+            "☁️ هزینه:\nواریز هزینه و ثبت‌نام هم بعد از مشخص شدن تاریخ و مکان برگزاری به اطلاع کسانی که می‌خوان ثبت‌نام کنن می‌رسه."
+        )
+        keyboard = [
+            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
+        ]
+        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == 'session_shiraz':
+        context.user_data["city"] = "shiraz"
+        context.user_data["ready_for_receipt"] = False
+        message = (
+            "سلام 🌱\nخوشحالیم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰\n\n"
+            "👫 مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
+            "📅 زمان:\nدر حال برنامه‌ریزی برای تاریخ بعدی رویدادمون هستیم.\n"
+            "اطلاع‌رسانی‌ها از طریق کانال ما به آدرس @bigkidkindergarten انجام میشه ✌🏻\n\n"
+            "📍 مکان:\nهر رویداد در فضای متفاوتی برگزار میشه که بعد از مشخص شدن تاریخ اعلام می‌کنیم.\n\n"
+            "☁️ هزینه:\nواریز هزینه و ثبت‌نام هم بعد از مشخص شدن تاریخ و مکان برگزاری به اطلاع کسانی که می‌خوان ثبت‌نام کنن می‌رسه."
+        )
+        keyboard = [
             [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
@@ -131,31 +168,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    elif query.data == 'session_tehran':
-        context.user_data["city"] = "tehran"
-        context.user_data["ready_for_receipt"] = False
-        message = (
-            "سلام 🌱\nخوشحالیم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰\n\n"
-            "👫 مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
-            "📅 زمان:\nدر حال برنامه‌ریزی برای تاریخ بعدی رویدادمون هستیم.\n"
-            "اطلاع‌رسانی‌ها از طریق کانال ما به آدرس @bigkidkindergarten انجام میشه ✌🏻\n\n"
-            "📍 مکان:\nهر رویداد در فضای متفاوتی برگزار میشه که بعد از مشخص شدن تاریخ اعلام می‌کنیم.\n\n"
-            "☁️ هزینه:\nواریز هزینه و ثبت‌نام هم بعد از مشخص شدن تاریخ و مکان برگزاری به اطلاع کسانی که می‌خوان ثبت‌نام کنن می‌رسه."
-        )
-        keyboard = [
-            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
-            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
-            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
-        ]
-        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard))
-
     elif query.data == 'support':
         await query.edit_message_text(
             "اگه سوالی داشتی یا نیاز به کمک داشتی، با آیدی @MahdeKoodakSupport ارتباط بگیر 💌",
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    # تایید/رد فیش
+    # تایید/رد فیش‌ها
     elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
         await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
@@ -176,10 +195,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = int(query.data.split("_")[2])
         await context.bot.send_message(
             chat_id=user_id,
-            text=(
-                "ثبت‌نام شما رد شد. متاسفانه اطلاعات کپشن کامل نبود.\n"
-                "لطفاً فیش رو دوباره ارسال کنید و در کپشن عکس، نام و نام خانوادگی و شماره تماس رو بنویسید 🌱"
-            ),
+            text=("ثبت‌نام شما رد شد. لطفاً فیش رو دوباره ارسال کنید و در کپشن عکس، نام و شماره تماس رو بنویسید 🌱"),
             reply_markup=support_back_channel('event_kindergarten')
         )
         try:
@@ -195,10 +211,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = int(query.data.split("_")[2])
         await context.bot.send_message(
             chat_id=user_id,
-            text=(
-                "❌ ثبت‌نام شما رد شد، مبلغ واریزی با تعرفه‌ی رویداد هماهنگ نبود.\n"
-                "برای بررسی و تأیید نهایی، لطفاً با پشتیبانی ارتباط بگیرید 💌"
-            ),
+            text=("❌ مبلغ واریزی با تعرفه هماهنگ نبود. برای بررسی با پشتیبانی تماس بگیر 💌"),
             reply_markup=support_back_channel('event_kindergarten')
         )
         try:
@@ -214,14 +227,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("city")
     ready = context.user_data.get("ready_for_receipt", False)
-
-    if city == "tehran":
-        await update.message.reply_text(
-            "هنوز رویدادی برای تهران برنامه‌ریزی نشده.\n"
-            "اگر برای رویداد اصفهان ثبت‌نام کردید، نهایی کردن ثبت‌نام رو با انتخاب رویداد اصفهان انجام داده و دوباره فیش را ارسال کنید 🌱",
-            reply_markup=support_back_channel('event_kindergarten')
-        )
-        return
 
     if city != "esfahan" or not ready or registration_closed_esfahan:
         await update.message.reply_text(
@@ -278,4 +283,3 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
-

@@ -38,6 +38,7 @@ RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزی�
 به نام {CARD_OWNER}"""
 
 # مرحله خوشامد و انتخاب مسیر
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("✨ شهرتو انتخاب کن", callback_data='event_kindergarten')],
@@ -52,7 +53,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    greeting = "سلام 🌱\nخوشحالیم که اومدی! می‌خوای با بات چه کاری انجام بدی؟"
+    
+    # متن جدید خوشامدگویی
+    greeting = (
+        "سلام 🌱\n"
+        "خوشحالم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰"
+    )
 
     if update.message:
         await update.message.reply_text(greeting, reply_markup=reply_markup)
@@ -277,4 +283,5 @@ if __name__ == '__main__':
     import nest_asyncio
     nest_asyncio.apply()
     asyncio.get_event_loop().run_until_complete(main())
+
 

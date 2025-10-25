@@ -41,8 +41,14 @@ RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزی�
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    esfahan_status = "✅" if not registration_closed_esfahan else "❌"
+    tehran_status = "❌"
+    shiraz_status = "❌"
+
     keyboard = [
-        [InlineKeyboardButton("✨ کدوم شهرو می‌خوای انتخاب کنی؟", callback_data='event_kindergarten')],
+        [InlineKeyboardButton(f"{esfahan_status} اصفهان", callback_data='session_esfahan')],
+        [InlineKeyboardButton(f"{tehran_status} تهران", callback_data='session_tehran')],
+        [InlineKeyboardButton(f"{shiraz_status} شیراز", callback_data='session_shiraz')],
         [InlineKeyboardButton("پشتیبانی", callback_data='support')],
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ]
@@ -57,9 +63,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     greeting = "سلام 🌱\nخوشحالم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰"
 
     if update.message:
-        await update.message.reply_text(greeting, reply_markup=reply_markup)
+        await update.message.reply_text(greeting + "\n\n✨ شهرتو انتخاب کن:", reply_markup=reply_markup)
     elif update.callback_query:
-        await update.callback_query.edit_message_text(greeting, reply_markup=reply_markup)
+        await update.callback_query.edit_message_text(greeting + "\n\n✨ شهرتو انتخاب کن:", reply_markup=reply_markup)
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -68,15 +74,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     if query.data == 'event_kindergarten':
+        esfahan_status = "✅" if not registration_closed_esfahan else "❌"
+        tehran_status = "❌"
+        shiraz_status = "❌"
+
         keyboard = [
-            [InlineKeyboardButton("اصفهان", callback_data='session_esfahan')],
-            [InlineKeyboardButton("تهران", callback_data='session_tehran')],
-            [InlineKeyboardButton("شیراز", callback_data='session_shiraz')],
+            [InlineKeyboardButton(f"{esfahan_status} اصفهان", callback_data='session_esfahan')],
+            [InlineKeyboardButton(f"{tehran_status} تهران", callback_data='session_tehran')],
+            [InlineKeyboardButton(f"{shiraz_status} شیراز", callback_data='session_shiraz')],
             [InlineKeyboardButton("پشتیبانی", callback_data='support')],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
         ]
         await query.edit_message_text(
-            "✨ کدوم شهرو می‌خوای انتخاب کنی؟",
+            "✨ شهرتو انتخاب کن:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 

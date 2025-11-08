@@ -240,9 +240,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ------------------------- تأیید / رد فیش‌ها -------------------------
 
     elif query.data.startswith("confirm_"):
-        user_id = int(query.data.split("_")[1])
-        city_name = context.user_data.get("city", "نامشخص")
-        await context.bot.send_message(chat_id=user_id, text=confirmed_payment_message(city_name))
+        # استخراج user_id و city_name از callback_data
+        _, user_id, city_name = query.data.split("_")
+        await context.bot.send_message(chat_id=int(user_id), text=confirmed_payment_message(city_name))
         try:
             await query.edit_message_caption(reply_markup=None)
         except:
@@ -292,8 +292,9 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sender_info = f"از طرف {user.full_name} (@{user.username or 'بدون نام کاربری'})"
     full_caption = f"{sender_info}\n\nکپشن:\n{caption}"
 
+    # ذخیره city در callback_data
     confirm_buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✅ تأیید ثبت‌نام", callback_data=f"confirm_{user_id}")],
+        [InlineKeyboardButton("✅ تأیید ثبت‌نام", callback_data=f"confirm_{user_id}_{city}")],
         [InlineKeyboardButton("❌ رد به‌خاطر اطلاعات ناقص", callback_data=f"reject_info_{user_id}")],
         [InlineKeyboardButton("❌ رد به‌خاطر مبلغ اشتباه", callback_data=f"reject_amount_{user_id}")]
     ])

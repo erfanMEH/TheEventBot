@@ -59,7 +59,6 @@ TEHRAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر 
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
-# پیام فیش اصفهان (اگر باز بشه)
 ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
 یک نفر : ۴۵۰ هزارتومان
@@ -72,6 +71,16 @@ ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر
 
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
+
+# ------------------------- پیام تأیید فیش -------------------------
+
+def confirmed_payment_message(city_name):
+    return (
+        f"پرداخت شما تأیید شد 🌱  \n"
+        f"ثبت‌نامتون در رویداد مهدکودک‌بزرگترها ({city_name}) قطعی شد.    \n\n"
+        "اطلاعات تکمیلی رویداد،‌ یک روز قبل از اون براتون ارسال میشه✨\n\n"
+        "منتظرتون هستیم 💛"
+    )
 
 # ------------------------- توابع کمکی -------------------------
 
@@ -122,7 +131,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-
     city_data = {
         "esfahan": "session_esfahan",
         "tehran": "session_tehran",
@@ -144,9 +152,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         await query.edit_message_text("✨ کدوم شهرو می‌خوای شرکت کنی؟", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # رویداد تهران
+    # ------------------------- رویدادها -------------------------
+
+    # تهران
     elif query.data == 'session_tehran':
-        context.user_data["city"] = "tehran"
+        context.user_data["city"] = "تهران"
         if registration_status["tehran"]:
             keyboard = [
                 [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_tehran')],
@@ -158,9 +168,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel('event_kindergarten'))
 
-    # رویداد اصفهان
+    # اصفهان
     elif query.data == 'session_esfahan':
-        context.user_data["city"] = "esfahan"
+        context.user_data["city"] = "اصفهان"
         if registration_status["esfahan"]:
             keyboard = [
                 [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_esfahan')],
@@ -172,9 +182,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel('event_kindergarten'))
 
-    # رویداد شیراز
+    # شیراز
     elif query.data == 'session_shiraz':
-        context.user_data["city"] = "shiraz"
+        context.user_data["city"] = "شیراز"
         if registration_status["shiraz"]:
             keyboard = [
                 [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_shiraz')],
@@ -186,7 +196,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel('event_kindergarten'))
 
-    # شروع ثبت‌نام (تهران)
+    # ------------------------- شروع ثبت‌نام -------------------------
+
     elif query.data == 'start_receipt_tehran':
         context.user_data["ready_for_receipt"] = "tehran"
         await query.edit_message_text(
@@ -197,7 +208,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
-    # شروع ثبت‌نام (اصفهان)
     elif query.data == 'start_receipt_esfahan':
         context.user_data["ready_for_receipt"] = "esfahan"
         await query.edit_message_text(
@@ -208,7 +218,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
-    # مدیریت باز و بسته کردن شهرها توسط ادمین
+    # ------------------------- کنترل باز/بسته شدن شهرها -------------------------
+
     elif query.data.startswith("open_") or query.data.startswith("close_"):
         city = query.data.split("_")[1]
         registration_status[city] = query.data.startswith("open_")
@@ -218,22 +229,22 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('start')
         )
 
-    # پشتیبانی
+    # ------------------------- پشتیبانی -------------------------
+
     elif query.data == 'support':
         await query.edit_message_text(
             "اگه سوالی داشتی یا نیاز به کمک داشتی، با آیدی @MahdeKoodakSupport ارتباط بگیر 💌",
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    # تأیید / رد فیش‌ها
+    # ------------------------- تأیید / رد فیش‌ها -------------------------
+
     elif query.data.startswith("confirm_"):
         user_id = int(query.data.split("_")[1])
-        await context.bot.send_message(chat_id=user_id, text="✅ ثبت‌نام شما تأیید شد! خوشحالیم که می‌بینیمتون 🌱")
-        now = jdatetime.datetime.now()
-        date_str = f"{now.day} {now.strftime('%B')} {now.year}"
-        new_caption = f"{query.message.caption}\n\n✅ تأیید شد در تاریخ {date_str}"
+        city_name = context.user_data.get("city", "نامشخص")
+        await context.bot.send_message(chat_id=user_id, text=confirmed_payment_message(city_name))
         try:
-            await query.edit_message_caption(caption=new_caption, reply_markup=None)
+            await query.edit_message_caption(reply_markup=None)
         except:
             pass
 
@@ -266,7 +277,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("ready_for_receipt")
 
-    # اگر شهر بسته است یا کاربر مستقیماً فیش فرستاده
     if not city or not registration_status.get(city, False):
         await update.message.reply_text(
             "❌ ثبت‌نام برای این شهر بسته شده یا مسیر ثبت‌نام کامل طی نشده.",

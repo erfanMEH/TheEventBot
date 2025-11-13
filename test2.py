@@ -46,9 +46,9 @@ ESFAHAN_EVENT_MESSAGE = (
     "مهدکودک‌بزرگترها اصفهان\n\n"
     "👫 مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
     "📅 زمان:\n۲۹ آبان ۱۴۰۴\nساعت ۱۸ الی ۲۱\n\n"
-    "📍 مکان:\nاستودیو یوگا پرانا (خیابان کارگر)\n\n"
+    "📍 مکان: \nاستودیو یوگا پرانا (خیابان کارگر)\n\n"
     "☁️ هزینه: ۴۵۰ هزارتومان\n\n"
-    "🔸شرایط ثبت نام با تخفیف:\n"
+    "🔸 شرایط ثبت نام با تخفیف:\n"
     "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
     "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
 )
@@ -96,6 +96,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
     ]
 
+    # دکمه‌های مخصوص ادمین
     if update.effective_user.id == ADMIN_CHAT_ID:
         keyboard.append([
             InlineKeyboardButton("🔒 بستن اصفهان", callback_data='close_esfahan'),
@@ -125,6 +126,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    city_data = {
+        "esfahan": "session_esfahan",
+        "tehran": "session_tehran",
+        "shiraz": "session_shiraz"
+    }
 
     # انتخاب شهر
     if query.data == 'event_kindergarten':
@@ -136,19 +142,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(f"{city_status('tehran')} تهران", callback_data='session_tehran')],
             [InlineKeyboardButton(f"{city_status('shiraz')} شیراز", callback_data='session_shiraz')],
             [InlineKeyboardButton("بازگشت", callback_data='start')],
-            [InlineKeyboardButton("پشتیبانی", callback_data='support')]
+            [InlineKeyboardButton("پشتیبانی", callback_data='support')],
+            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
         ]
         await query.edit_message_text("✨ کدوم شهرو می‌خوای شرکت کنی؟", reply_markup=InlineKeyboardMarkup(keyboard))
 
     # تهران
     elif query.data == 'session_tehran':
         context.user_data["city"] = "تهران"
-        keyboard = [
-            [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_tehran')],
-            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
-            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]
-        ]
         if registration_status["tehran"]:
+            keyboard = [
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_tehran')],
+                [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]
+            ]
             await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel('event_kindergarten'))
@@ -156,12 +163,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # اصفهان
     elif query.data == 'session_esfahan':
         context.user_data["city"] = "اصفهان"
-        keyboard = [
-            [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_esfahan')],
-            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
-            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]
-        ]
         if registration_status["esfahan"]:
+            keyboard = [
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_esfahan')],
+                [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]
+            ]
             await query.edit_message_text(ESFAHAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel('event_kindergarten'))
@@ -169,12 +176,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # شیراز
     elif query.data == 'session_shiraz':
         context.user_data["city"] = "شیراز"
-        keyboard = [
-            [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_shiraz')],
-            [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
-            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]
-        ]
         if registration_status["shiraz"]:
+            keyboard = [
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_shiraz')],
+                [InlineKeyboardButton("بازگشت", callback_data='event_kindergarten')],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]
+            ]
             await query.edit_message_text("مهدکودک‌بزرگترها شیراز ✨", reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel('event_kindergarten'))
@@ -188,6 +195,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]
             ])
         )
+
     elif query.data == 'start_receipt_esfahan':
         context.user_data["ready_for_receipt"] = "esfahan"
         await query.edit_message_text(
@@ -197,7 +205,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
-    # باز/بسته کردن شهرها
+    # کنترل باز/بسته شدن شهرها
     elif query.data.startswith("open_") or query.data.startswith("close_"):
         city = query.data.split("_")[1]
         registration_status[city] = query.data.startswith("open_")
@@ -214,40 +222,49 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    # تأیید / رد فیش
+    # ------------------------- تأیید / رد فیش‌ها -------------------------
     elif query.data.startswith("confirm_"):
         _, user_id, city_name = query.data.split("_")
+        user_id = int(user_id)
+
         confirmation_text = (
             "پرداخت شما تأیید شد 🌱\n"
-            "ثبت‌نامتون در رویداد مهدکودک‌بزرگترها کامل شد.\n\n"
+            "ثبت‌نامتون در رویداد مهدکودک‌بزرگترهای پنجشنبه کامل شد.\n\n"
             "اطلاعات تکمیلی رویداد،‌ یک روز قبل از اون براتون ارسال میشه✨\n\n"
             "منتظرتون هستیم 💛"
         )
-        await context.bot.send_message(chat_id=int(user_id), text=confirmation_text)
+        await context.bot.send_message(chat_id=user_id, text=confirmation_text)
 
-    elif query.data.startswith("reject_info_"):
-        _, user_id = query.data.split("_")[0:2]
+        msg = query.message
+        caption = msg.caption or ""
+        today_shamsi = jdatetime.date.today().strftime("%Y/%m/%d")
+        new_caption = f"{caption}\n\n✅ تایید شده در تاریخ {today_shamsi}"
+        await query.edit_message_caption(caption=new_caption, reply_markup=None)
+
+    elif query.data.startswith("reject_info_") or query.data.startswith("reject_amount_"):
+        user_id = int(query.data.split("_")[2])
+        reason_text = "اطلاعات ناقص" if "reject_info_" in query.data else "مبلغ اشتباه"
+
         await context.bot.send_message(
-            chat_id=int(user_id),
-            text="❌ ثبت‌نام شما رد شد. لطفاً فیش رو دوباره ارسال کنید و نام و شماره تماس رو بنویسید 🌱",
+            chat_id=user_id,
+            text=f"❌ ثبت‌نام شما رد شد ({reason_text}). لطفاً فیش رو دوباره ارسال کنید و نام و شماره تماس رو بنویسید 🌱",
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    elif query.data.startswith("reject_amount_"):
-        _, user_id = query.data.split("_")[0:2]
-        await context.bot.send_message(
-            chat_id=int(user_id),
-            text="❌ مبلغ واریزی با تعرفه هماهنگ نبود. برای بررسی با پشتیبانی تماس بگیر 💌",
-            reply_markup=support_back_channel('event_kindergarten')
-        )
+        msg = query.message
+        caption = msg.caption or ""
+        today_shamsi = jdatetime.date.today().strftime("%Y/%m/%d")
+        new_caption = f"{caption}\n\n❌ رد شده ({reason_text}) در تاریخ {today_shamsi}"
+        await query.edit_message_caption(caption=new_caption, reply_markup=None)
 
 # ------------------------- دریافت عکس فیش -------------------------
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = context.user_data.get("ready_for_receipt")
+
     if not city or not registration_status.get(city, False):
         await update.message.reply_text(
-            "❌ لطفا فیش واریزیتون رو به همراه نام و نام خانوادگی در کپشن عکس، "
-            "بعد از انتخاب کردن «نهایی کردن ثبت‌نام» ارسال کنید.",
+            "❌ ثبت‌نام برای این شهر بسته شده یا مسیر ثبت‌نام کامل طی نشده.\n"
+            "لطفا فیش واریزیتون رو به همراه نام و نام خانوادگی در کپشن عکس، بعد از انتخاب کردن «نهایی کردن ثبت‌نام» ارسال کنید.",
             reply_markup=support_back_channel('event_kindergarten')
         )
         return

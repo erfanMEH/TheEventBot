@@ -1,12 +1,10 @@
 import os
 import asyncio
-import jdatetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
     MessageHandler, filters, ContextTypes
 )
-from datetime import timedelta
 
 # ------------------------- تنظیمات ثابت -------------------------
 
@@ -45,6 +43,17 @@ TEHRAN_EVENT_MESSAGE = (
     "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
 )
 
+ESFAHAN_EVENT_MESSAGE = (
+    "مهدکودک‌بزرگترها اصفهان\n\n"
+    "👫 مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
+    "📅 زمان:\n۲۹ آبان ۱۴۰۴\nساعت ۱۸ الی ۲۱\n\n"
+    "📍 مکان:\nاستودیو یوگا پرانا (خیابان کارگر)\n\n"
+    "☁️ هزینه: ۴۵۰ هزارتومان\n\n"
+    "🔸 شرایط ثبت نام با تخفیف:\n"
+    "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
+    "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
+)
+
 TEHRAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
 یک نفر : 590 هزارتومان
@@ -59,12 +68,12 @@ TEHRAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر 
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
-ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
+ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعدا نفرات مشخص کن:
 
 یک نفر : ۴۵۰ هزارتومان
 دونفر : ۸۵۵ هزارتومان
 سه نفر: ۱,۲۶۰ هزارتومان
-چهار نفر: ۱,۶۶۵ هزارتومان
+چهار نفر: ۱,۶۶۵ هزارتومان 
 پنج نفر: ۲,۰۷۰ هزارتومان
 
 📤 حالا مبلغ رو به این شماره کارت واریز کن و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
@@ -121,11 +130,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    city_data = {
-        "esfahan": "session_esfahan",
-        "tehran": "session_tehran",
-        "shiraz": "session_shiraz"
-    }
 
     # انتخاب شهر
     if query.data == 'event_kindergarten':
@@ -144,7 +148,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # تهران
     elif query.data == 'session_tehran':
-        context.user_data["city"] = "تهران"
         if registration_status["tehran"]:
             keyboard = [
                 [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_tehran')],
@@ -158,7 +161,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # اصفهان
     elif query.data == 'session_esfahan':
-        context.user_data["city"] = "اصفهان"
         if registration_status["esfahan"]:
             keyboard = [
                 [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_esfahan')],
@@ -166,13 +168,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
                 [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
             ]
-            await query.edit_message_text("مهدکودک‌بزرگترها اصفهان ✨", reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(ESFAHAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel('event_kindergarten'))
 
     # شیراز
     elif query.data == 'session_shiraz':
-        context.user_data["city"] = "شیراز"
         if registration_status["shiraz"]:
             keyboard = [
                 [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data='start_receipt_shiraz')],
@@ -186,23 +187,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # شروع ثبت‌نام
     elif query.data == 'start_receipt_tehran':
-        context.user_data["ready_for_receipt"] = "tehran"
         await query.edit_message_text(
             TEHRAN_RECEIPT_MESSAGE,
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
-                [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
-            ])
+            reply_markup=support_back_channel('event_kindergarten')
         )
 
     elif query.data == 'start_receipt_esfahan':
-        context.user_data["ready_for_receipt"] = "esfahan"
         await query.edit_message_text(
             ESFAHAN_RECEIPT_MESSAGE,
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
-                [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")]
-            ])
+            reply_markup=support_back_channel('event_kindergarten')
         )
 
     # کنترل باز/بسته شدن شهرها
@@ -222,8 +215,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=support_back_channel('event_kindergarten')
         )
 
-    # ------------------------- تأیید / رد فیش‌ها -------------------------
-
+    # تأیید / رد فیش‌ها
     elif query.data.startswith("confirm_"):
         _, user_id, city_name = query.data.split("_")
         confirmation_text = (
@@ -271,15 +263,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ------------------------- دریافت عکس فیش -------------------------
 
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    city = context.user_data.get("ready_for_receipt")
-
-    if not city or not registration_status.get(city, False):
-        await update.message.reply_text(
-            "❌ ثبت‌نام برای این شهر بسته شده یا مسیر ثبت‌نام کامل طی نشده.",
-            reply_markup=support_back_channel('event_kindergarten')
-        )
-        return
-
     photo = update.message.photo[-1]
     caption = update.message.caption or "بدون کپشن"
     user = update.message.from_user
@@ -289,7 +272,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     full_caption = f"{sender_info}\n\nکپشن:\n{caption}"
 
     confirm_buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✅ تأیید ثبت‌نام", callback_data=f"confirm_{user_id}_{city}")],
+        [InlineKeyboardButton("✅ تأیید ثبت‌نام", callback_data=f"confirm_{user_id}_unknown")],
         [InlineKeyboardButton("❌ رد به‌خاطر اطلاعات ناقص", callback_data=f"reject_info_{user_id}")],
         [InlineKeyboardButton("❌ رد به‌خاطر مبلغ اشتباه", callback_data=f"reject_amount_{user_id}")]
     ])
@@ -300,8 +283,6 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=full_caption,
         reply_markup=confirm_buttons
     )
-
-    context.user_data["ready_for_receipt"] = None
 
     await update.message.reply_text(
         "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
@@ -326,6 +307,4 @@ async def main():
     await app.run_polling()
 
 if __name__ == '__main__':
-    import nest_asyncio
-    nest_asyncio.apply()
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.run(main())

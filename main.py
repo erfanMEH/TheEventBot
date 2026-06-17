@@ -1,13 +1,6 @@
-# ------------------ رفع مشکل سازگاری با پایتون 3.14 ------------------
-import telegram.ext._updater
-if not hasattr(telegram.ext._updater.Updater, '__dict__'):
-    setattr(telegram.ext._updater.Updater, '__dict__', {})
-# ---------------------------------------------------------------------
-
 import os
-import asyncio
 import jdatetime
-from quart import Quart, request
+from flask import Flask, request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     ApplicationBuilder,
@@ -22,7 +15,7 @@ from telegram.ext import (
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "8486591461"))
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # آدرس سرور رندر شما
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 
 SUPPORT_USERNAME = "MahdeKoodakSupport"
 CHANNEL_USERNAME = "bigkidkindergarten"
@@ -120,24 +113,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     if update.effective_user and update.effective_user.id == ADMIN_CHAT_ID:
-        keyboard.append(
-            [
-                InlineKeyboardButton("🔒 بستن اصفهان", callback_data="close_esfahan"),
-                InlineKeyboardButton("🔓 باز کردن اصفهان", callback_data="open_esfahan"),
-            ]
-        )
-        keyboard.append(
-            [
-                InlineKeyboardButton("🔒 بستن تهران", callback_data="close_tehran"),
-                InlineKeyboardButton("🔓 باز کردن تهران", callback_data="open_tehran"),
-            ]
-        )
-        keyboard.append(
-            [
-                InlineKeyboardButton("🔒 بستن شیراز", callback_data="close_shiraz"),
-                InlineKeyboardButton("🔓 باز کردن شیراز", callback_data="open_shiraz"),
-            ]
-        )
+        keyboard.append([
+            InlineKeyboardButton("🔒 بستن اصفهان", callback_data="close_esfahan"),
+            InlineKeyboardButton("🔓 باز کردن اصفهان", callback_data="open_esfahan"),
+        ])
+        keyboard.append([
+            InlineKeyboardButton("🔒 بستن تهران", callback_data="close_tehran"),
+            InlineKeyboardButton("🔓 باز کردن تهران", callback_data="open_tehran"),
+        ])
+        keyboard.append([
+            InlineKeyboardButton("🔒 بستن شیراز", callback_data="close_shiraz"),
+            InlineKeyboardButton("🔓 باز کردن شیراز", callback_data="open_shiraz"),
+        ])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     greeting = (
@@ -313,7 +300,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
     )
 
-# ------------------------- تنظیمات بات و Quart -------------------------
+# ------------------------- تنظیمات بات و Flask -------------------------
 
 async def set_bot_commands(app):
     await app.bot.set_my_commands([BotCommand("start", "شروع ربات")])
@@ -321,8 +308,8 @@ async def set_bot_commands(app):
 # ساخت اپلیکیشن تلگرام
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
 
-# ایجاد برنامه Quart
-app = Quart(__name__)
+# ایجاد برنامه Flask
+app = Flask(__name__)
 
 # رجیستر کردن هندلرهای تلگرام
 telegram_app.add_handler(CommandHandler("start", start))
@@ -330,26 +317,27 @@ telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
 @app.route("/", methods=["GET", "POST"])
-async def index():
+def index():
     if request.method == "POST":
-        data = await request.get_json()
+        data = request.get_json()
+        
+        # اجرای آپدیت تلگرام در لوپ اسینک پیش‌فرض فلاسك
         update = Update.de_json(data, telegram_app.bot)
-        await telegram_app.process_update(update)
+        asyncio.run(telegram_app.initialize())
+        asyncio.run(telegram_app.process_update(update))
+        
         return "OK", 200
     return "Server is running!", 200
 
-@app.before_serving
-async def startup():
-    """راه‌اندازی بات و وب‌هوک تلگرام قبل از لود شدن کامل سرور"""
-    await telegram_app.initialize()
+# تنظیم خودکار وب‌هوک زمان شروع برنامه
+@app.before_all_requests
+def setup_webhook():
+    # این تابع فقط یک بار در اولین ریکوئست اجرا می‌شود
+    app.before_all_requests_funcs.clear() 
     if WEBHOOK_URL:
-        await telegram_app.bot.set_webhook(url=WEBHOOK_URL)
+        asyncio.run(telegram_app.initialize())
+        asyncio.run(telegram_app.bot.set_webhook(url=WEBHOOK_URL))
         print(f"✅ Webhook successfully set to: {WEBHOOK_URL}")
-
-@app.after_serving
-async def shutdown():
-    """بستن سشن‌ها هنگام خاموش شدن سرور"""
-    await telegram_app.shutdown()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -318,21 +318,18 @@ telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    if request.method == "POST":
-        data = request.get_json()
-        update = Update.de_json(data, telegram_app.bot)
-        # هر ریکوئست یک لوپ موقت می‌سازه، پردازش رو اجرا می‌کنه و می‌بنده
-        asyncio.run(telegram_app.process_update(update))
-        return "OK", 200
-    return "Server is running!", 200
+# یک event loop واحد برای کل عمر اپلیکیشن می‌سازیم و هیچ‌وقت نمی‌بندیمش.
+# (اگه به‌جای این از asyncio.run() در هر ریکوئست استفاده کنیم، چون asyncio.run
+#  هر بار loop رو می‌بنده ولی کلاینت HTTP داخلی تلگرام به همون loop وصل می‌مونه،
+#  در ریکوئست بعدی خطای "Event loop is closed" می‌گیریم.)
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 
 async def _startup():
     """
     این تابع فقط یک‌بار، قبل از بالا آمدن سرور اجرا می‌شه:
-    - اپلیکیشن تلگرام رو initialize می‌کنه
+    - اپلیکیشن تلگرام رو initialize می‌کنه (روی همون loop واحد)
     - وب‌هوک رو ست می‌کنه (اگه WEBHOOK_URL ست شده باشه)
     """
     await telegram_app.initialize()
@@ -343,7 +340,18 @@ async def _startup():
         print("⚠️ WEBHOOK_URL تنظیم نشده؛ وب‌هوک ست نشد.")
 
 
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        data = request.get_json()
+        update = Update.de_json(data, telegram_app.bot)
+        # همیشه از همون loop واحد استفاده می‌کنیم، نه یک loop تازه در هر ریکوئست
+        loop.run_until_complete(telegram_app.process_update(update))
+        return "OK", 200
+    return "Server is running!", 200
+
+
 if __name__ == "__main__":
-    asyncio.run(_startup())
+    loop.run_until_complete(_startup())
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

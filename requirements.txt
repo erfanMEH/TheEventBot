@@ -3,4 +3,4 @@ quart==0.19.4
 hypercorn==0.15.0
 jdatetime==3.8.1
 nest_asyncio==1.5.6
-aiohttp==3.8.5
+aiohttp==3.11.11

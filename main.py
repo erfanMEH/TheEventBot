@@ -80,13 +80,14 @@ TEHRAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر 
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
-ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
+ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات محاسبه کن:
 
-یک نفر : ۴۵۰ هزارتومان
-دونفر : ۸۵۵ هزارتومان
-سه نفر: ۱,۲۶۰ هزارتومان
-چهار نفر: ۱,۶۶۵ هزارتومان
-پنج نفر: ۲،۰۷۰ هزارتومان
+یک نفر: ۸۵۰ هزارتومان
+دو نفر: یک میلیون و ۶۱۵ هزارتومان
+سه نفر: دو میلیون و ۳۸۰ هزارتومان
+چهار نفر: سه میلیون و ۱۴۵ هزارتومان
+پنج نفر: سه میلیون و ۹۱۰ هزارتومان
+و ...
 
 📤 حالا مبلغ رو به این شماره کارت واریز کن و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
 
@@ -245,11 +246,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data.startswith("reject_info_") or query.data.startswith("reject_amount_"):
         user_id = int(query.data.split("_")[2])
-        reason_text = "اطلاعات ناقص" if "reject_info" in query.data else "مبلغ اشتباه"
+        is_info_reject = "reject_info" in query.data
+
+        if is_info_reject:
+            reason_text = "اطلاعات ناقص"
+            reject_message = (
+                "❌ ثبت‌نام شما به دلیل اطلاعات ناکافی، رد شد. لطفا مراحل ثبت‌نام رو از اول طی کنید "
+                "و فیشتون رو دوباره ارسال کنید. در کپشن عکس، نام و شماره تماستون رو بنویسید 🌱"
+            )
+        else:
+            reason_text = "مبلغ اشتباه"
+            reject_message = (
+                "❌ ثبت‌نام شما به دلیل واریز مبلغ اشتباه رد شد. "
+                "با اکانت پشتیبانی به آیدی @MahdeKoodakSupport در تماس باشید."
+            )
 
         await context.bot.send_message(
             chat_id=user_id,
-            text=f"❌ ثبت‌نام شما رد شد ({reason_text}). لطفاً فیش رو دوباره ارسال کنید و نام و شماره تماس رو بنویسید 🌱",
+            text=reject_message,
             reply_markup=support_back_channel("event_kindergarten"),
         )
 

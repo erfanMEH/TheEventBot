@@ -1,3 +1,9 @@
+# ------------------ رفع مشکل سازگاری با پایتون 3.14 ------------------
+import telegram.ext._updater
+if not hasattr(telegram.ext._updater.Updater, '__dict__'):
+    setattr(telegram.ext._updater.Updater, '__dict__', {})
+# ---------------------------------------------------------------------
+
 import os
 import asyncio
 import jdatetime
@@ -307,7 +313,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
     )
 
-# ------------------------- پیکربندی Webhook و Quart -------------------------
+# ------------------------- تنظیمات بات و Quart -------------------------
 
 async def set_bot_commands(app):
     await app.bot.set_my_commands([BotCommand("start", "شروع ربات")])
@@ -315,8 +321,13 @@ async def set_bot_commands(app):
 # ساخت اپلیکیشن تلگرام
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
 
-# ایجاد برنامه Quart (جایگزین Asyncِ فلاسك)
+# ایجاد برنامه Quart
 app = Quart(__name__)
+
+# رجیستر کردن هندلرهای تلگرام
+telegram_app.add_handler(CommandHandler("start", start))
+telegram_app.add_handler(CallbackQueryHandler(button_handler))
+telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
 @app.route("/", methods=["GET", "POST"])
 async def index():

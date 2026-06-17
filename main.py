@@ -1,4 +1,5 @@
 import os
+import asyncio
 import jdatetime
 from flask import Flask, request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
@@ -32,8 +33,8 @@ registration_status = {
 
 DYNAMIC_CONFIRM_DAY = {
     "tehran": "جمعه",
-    "esfahan": "سه‌شنبه", 
-    "shiraz": "رویداد شیراز", 
+    "esfahan": "سه‌شنبه",
+    "shiraz": "رویداد شیراز",
 }
 
 CLOSED_EVENT_MESSAGE = (
@@ -316,29 +317,33 @@ telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         data = request.get_json()
-        
-        # اجرای آپدیت تلگرام در لوپ اسینک پیش‌فرض فلاسك
         update = Update.de_json(data, telegram_app.bot)
-        asyncio.run(telegram_app.initialize())
+        # هر ریکوئست یک لوپ موقت می‌سازه، پردازش رو اجرا می‌کنه و می‌بنده
         asyncio.run(telegram_app.process_update(update))
-        
         return "OK", 200
     return "Server is running!", 200
 
-# تنظیم خودکار وب‌هوک زمان شروع برنامه
-@app.before_all_requests
-def setup_webhook():
-    # این تابع فقط یک بار در اولین ریکوئست اجرا می‌شود
-    app.before_all_requests_funcs.clear() 
+
+async def _startup():
+    """
+    این تابع فقط یک‌بار، قبل از بالا آمدن سرور اجرا می‌شه:
+    - اپلیکیشن تلگرام رو initialize می‌کنه
+    - وب‌هوک رو ست می‌کنه (اگه WEBHOOK_URL ست شده باشه)
+    """
+    await telegram_app.initialize()
     if WEBHOOK_URL:
-        asyncio.run(telegram_app.initialize())
-        asyncio.run(telegram_app.bot.set_webhook(url=WEBHOOK_URL))
+        await telegram_app.bot.set_webhook(url=WEBHOOK_URL)
         print(f"✅ Webhook successfully set to: {WEBHOOK_URL}")
+    else:
+        print("⚠️ WEBHOOK_URL تنظیم نشده؛ وب‌هوک ست نشد.")
+
 
 if __name__ == "__main__":
+    asyncio.run(_startup())
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

@@ -2,7 +2,15 @@ import os
 import asyncio
 import jdatetime
 from flask import Flask, request
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    BotCommand,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardRemove,
+)
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -27,6 +35,12 @@ registration_status = {
     "esfahan": False,
     "tehran": False,
     "shiraz": False,
+}
+
+CITY_DISPLAY_NAMES = {
+    "esfahan": "اصفهان",
+    "tehran": "تهران",
+    "shiraz": "شیراز",
 }
 
 # ------------------------- پیام‌های آماده -------------------------
@@ -105,6 +119,16 @@ def support_back_channel(callback_data: str) -> InlineKeyboardMarkup:
         ]
     )
 
+def closed_event_keyboard(city_key: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("🔔 می‌خوای زودتر از بقیه خبردار شی؟", callback_data=f"notify_{city_key}")],
+            [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")],
+        ]
+    )
+
 # ------------------------- شروع /start -------------------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -150,12 +174,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "event_kindergarten":
         def city_status(city):
-            return "✅" if registration_status[city] else "❌"
+            return "✅ " if registration_status[city] else ""
 
         keyboard = [
-            [InlineKeyboardButton(f"{city_status('esfahan')} اصفهان", callback_data="session_esfahan")],
-            [InlineKeyboardButton(f"{city_status('tehran')} تهران", callback_data="session_tehran")],
-            [InlineKeyboardButton(f"{city_status('shiraz')} شیراز", callback_data="session_shiraz")],
+            [InlineKeyboardButton(f"{city_status('esfahan')}اصفهان", callback_data="session_esfahan")],
+            [InlineKeyboardButton(f"{city_status('tehran')}تهران", callback_data="session_tehran")],
+            [InlineKeyboardButton(f"{city_status('shiraz')}شیراز", callback_data="session_shiraz")],
             [InlineKeyboardButton("بازگشت", callback_data="start")],
             [InlineKeyboardButton("پشتیبانی", callback_data="support")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")],
@@ -172,7 +196,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
-            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel("event_kindergarten"))
+            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("tehran"))
 
     elif query.data == "session_esfahan":
         context.user_data["city"] = "اصفهان"
@@ -184,7 +208,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             await query.edit_message_text(ESFAHAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
-            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel("event_kindergarten"))
+            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("esfahan"))
 
     elif query.data == "session_shiraz":
         context.user_data["city"] = "شیراز"
@@ -196,7 +220,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             await query.edit_message_text("مهدکودک‌بزرگترها شیراز ✨", reply_markup=InlineKeyboardMarkup(keyboard))
         else:
-            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel("event_kindergarten"))
+            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("shiraz"))
 
     elif query.data == "start_receipt_tehran":
         context.user_data["ready_for_receipt"] = "tehran"
@@ -217,6 +241,32 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         registration_status[city] = query.data.startswith("open")
         state = "باز شد ✅" if registration_status[city] else "بسته شد ❌"
         await query.edit_message_text(f"ثبت‌نام برای {city} {state}", reply_markup=support_back_channel("start"))
+
+    elif query.data.startswith("notify_"):
+        city_key = query.data.split("_", 1)[1]
+        context.user_data["notify_city"] = city_key
+        city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
+
+        # حذف دکمه‌ی «خبردار شو» از پیام قبلی تا کاربر دوبار روش نزنه
+        await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel("event_kindergarten"))
+
+        contact_keyboard = ReplyKeyboardMarkup(
+            [
+                [KeyboardButton("📱 اشتراک‌گذاری شماره تلفن", request_contact=True)],
+                ["انصراف"],
+            ],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
+
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=(
+                f"عالیه 🌱 برای اینکه به محض باز شدن ثبت‌نام «{city_name}» زودتر از بقیه خبردار بشی، "
+                "با دکمه‌ی پایین شماره تماستو با ما به اشتراک بگذار 📱"
+            ),
+            reply_markup=contact_keyboard,
+        )
 
     elif query.data == "support":
         await query.edit_message_text(
@@ -315,6 +365,44 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "فیش شما با موفقیت دریافت شد 💌\nدر حال بررسی توسط تیم ثبت‌نام هستیم. به‌زودی نتیجه رو بهتون اطلاع می‌دیم 🌱"
     )
 
+# ------------------------- دریافت شماره تماس برای اطلاع‌رسانی زودهنگام -------------------------
+
+async def contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    city_key = context.user_data.get("notify_city")
+
+    if not city_key:
+        # کانتکتی که بدون طی کردن مسیر «خبردار شو» اومده رو نادیده می‌گیریم
+        return
+
+    contact = update.message.contact
+    user = update.message.from_user
+    city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
+    full_name = f"{contact.first_name or ''} {contact.last_name or ''}".strip()
+
+    admin_text = (
+        "🔔 درخواست اطلاع‌رسانی زودهنگام\n\n"
+        f"شهر: {city_name}\n"
+        f"نام: {full_name or 'نامشخص'}\n"
+        f"شماره تماس: {contact.phone_number}\n"
+        f"یوزرنیم: @{user.username or 'ندارد'}\n"
+        f"آیدی عددی: {user.id}"
+    )
+
+    await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_text)
+
+    await update.message.reply_text(
+        f"ثبت شد 🌱 به محض باز شدن ثبت‌نام «{city_name}»، اول از همه به تو خبر می‌دیم 💛",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    context.user_data["notify_city"] = None
+
+
+async def cancel_notify_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.user_data.get("notify_city"):
+        context.user_data["notify_city"] = None
+        await update.message.reply_text("باشه، فعلاً بی‌خیال 🌱", reply_markup=ReplyKeyboardRemove())
+
 # ------------------------- تنظیمات بات و Flask -------------------------
 
 async def set_bot_commands(app):
@@ -330,6 +418,8 @@ app = Flask(__name__)
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
+telegram_app.add_handler(MessageHandler(filters.CONTACT, contact_handler))
+telegram_app.add_handler(MessageHandler(filters.Regex("^انصراف$"), cancel_notify_handler))
 
 
 # یک event loop واحد برای کل عمر اپلیکیشن می‌سازیم و هیچ‌وقت نمی‌بندیمش.

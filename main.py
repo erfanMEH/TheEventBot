@@ -392,7 +392,7 @@ async def contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_text)
 
     await update.message.reply_text(
-        f"ثبت شد 🌱 به محض باز شدن ثبت‌نام «{city_name}»، اول از همه به تو خبر می‌دیم 💛",
+        f"ثبت شد🌱 به محض باز شدن ثبت‌نام «{city_name}»، اول از همه به تو خبر می‌دیم💛",
         reply_markup=ReplyKeyboardRemove(),
     )
 

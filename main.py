@@ -70,7 +70,6 @@ TEHRAN_EVENT_MESSAGE = (
     "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
 )
 
-# تغییر متن رویداد اصفهان به تاریخ و مشخصات جدید سال ۱۴۰۵
 ESFAHAN_EVENT_MESSAGE = (
     "مهدکودک‌بزرگترها اصفهان\n\n"
     "👫مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
@@ -113,7 +112,6 @@ ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
-# متن قوانین استرداد وجه
 REFUND_RULES_MESSAGE = (
     "🧸 قوانین استرداد ثبت‌نام «مهدکودک بزرگترها»\n\n"
     "ما توی مهدکودک بزرگترها می‌خوایم هم برنامه‌هامون منظم باشه، هم شما با خیال راحت ثبت‌نام کنید. "
@@ -253,11 +251,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("shiraz"))
 
-    # هندلرهای مربوط به نهایی کردن ثبت‌نام با دکمه قوانین استرداد اضافه شده
     elif query.data == "start_receipt_tehran":
         context.user_data["ready_for_receipt"] = "tehran"
         keyboard = [
-            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="refund_rules_tehran")],
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_tehran")],
             [InlineKeyboardButton("بازگشت", callback_data="session_tehran")],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         ]
@@ -266,7 +263,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "start_receipt_esfahan":
         context.user_data["ready_for_receipt"] = "esfahan"
         keyboard = [
-            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="refund_rules_esfahan")],
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_esfahan")],
             [InlineKeyboardButton("بازگشت", callback_data="session_esfahan")],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         ]
@@ -275,7 +272,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "start_receipt_shiraz":
         context.user_data["ready_for_receipt"] = "shiraz"
         keyboard = [
-            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="refund_rules_shiraz")],
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_shiraz")],
             [InlineKeyboardButton("بازگشت", callback_data="session_shiraz")],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         ]
@@ -284,9 +281,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-    # هندلرهای دکمه قوانین استرداد (تفکیک بر اساس شهر برای بازگشت درست)
-    elif query.data.startswith("refund_rules_"):
-        current_city = query.data.split("_")[2]
+    elif query.data.startswith("rules_"):
+        current_city = query.data.split("_")[1]
         keyboard = [
             [InlineKeyboardButton("بازگشت به نهایی کردن ثبت‌نام", callback_data=f"start_receipt_{current_city}")]
         ]
@@ -487,4 +483,11 @@ def index():
     if request.method == "POST":
         data = request.get_json()
         update = Update.de_json(data, telegram_app.bot)
-        loop.run_
+        loop.run_until_complete(telegram_app.process_update(update))
+        return "OK", 200
+    return "Server is running!", 200
+
+if __name__ == "__main__":
+    loop.run_until_complete(_startup())
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

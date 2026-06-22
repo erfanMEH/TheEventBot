@@ -73,9 +73,9 @@ TEHRAN_EVENT_MESSAGE = (
 ESFAHAN_EVENT_MESSAGE = (
     "مهدکودک‌بزرگترها اصفهان\n\n"
     "👫مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
-    "📅زمان:\n۴ آذر ۱۴۰۴\nساعت ۱۷ الی ۲۰\n\n"
-    "📍مکان: \nخونه‌نقطه🌱\n\n"
-    "☁️ هزینه: ۴۵۰ هزارتومان \n\n"
+    "📅زمان:\nپنجشنبه، ۱۱ تیر ۱۴۰۵\nساعت 17 الی 20\n\n"
+    "📍مکان: \nکلینیک نهال، خیابان شیخ‌صدوق\n\n"
+    "☁️ هزینه: ۸۵۰ هزارتومان \n\n"
     "🔸شرایط ثبت نام با تخفیف:\n"
     "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
     "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
@@ -109,6 +109,44 @@ ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
+REFUND_POLICY_MESSAGE = """🧸 قوانین استرداد ثبت‌نام «مهدکودک بزرگترها»
+
+ما توی مهدکودک بزرگترها می‌خوایم هم برنامه‌هامون منظم باشه، هم شما با خیال راحت ثبت‌نام کنید. برای همین قوانین استرداد رو اینجا کامل براتون نوشتیم🫶🏻:
+
+📅 ۱. بازه زمانی استرداد
+
+اگر تا ۴۸ ساعت قبل از شروع برنامه انصراف بدید، هزینه‌تون به‌صورت کامل قابل استرداده.
+(بزرگسالیم و قول‌ و قرار داریم😌)
+
+💸 ۲. نحوه استرداد
+
+در بازه‌ی مجاز، هزینه به انتخاب شما:
+کامل بازپرداخت میشه.
+یا
+تبدیل میشه به اعتبار برای شرکت در برنامه‌های بعدی.
+(برای اونایی که هی دلشون می‌خواد برگردن مهد 🤭)
+
+⏱️ ۳. سرعت بررسی
+
+درخواست استرداد شما در کمتر از ۶ ساعت بررسی میشه.
+(چون می‌دونیم حوصله معطلی ندارین.)
+
+🤧 ۴. استثنا: مریضی
+
+اگه قبل از برنامه مریض شدید و تا ۲۴ ساعت قبل به ما اطلاع بدید، هزینه همچنان قابل استرداده.
+سلامتی‌تون مهم‌تر از هر برنامه‌ایه ❤️
+
+🛎️ ۵. مسیر درخواست استرداد
+
+برای ثبت درخواست فقط کافیه به پشتیبانی پیام بدید:
+@MahdeKoodakSupport
+(پشتیبانی ما از مربیای مهربون مهد هم مهربون‌تره 🥺)"""
+
+RECEIPT_MESSAGES = {
+    "tehran": TEHRAN_RECEIPT_MESSAGE,
+    "esfahan": ESFAHAN_RECEIPT_MESSAGE,
+}
+
 # ------------------------- توابع کمکی -------------------------
 
 def support_back_channel(callback_data: str) -> InlineKeyboardMarkup:
@@ -127,6 +165,24 @@ def closed_event_keyboard(city_key: str) -> InlineKeyboardMarkup:
             [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")],
+        ]
+    )
+
+def receipt_keyboard(city_key: str) -> InlineKeyboardMarkup:
+    """کیبورد صفحه‌ی نهایی کردن ثبت‌نام: شامل دکمه‌ی قوانین استرداد و پشتیبانی"""
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("📋 قوانین استرداد", callback_data=f"refund_policy_{city_key}")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
+    )
+
+def refund_policy_keyboard(city_key: str) -> InlineKeyboardMarkup:
+    """کیبورد صفحه‌ی قوانین استرداد: بازگشت به همون صفحه‌ی نهایی کردن ثبت‌نام"""
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("بازگشت", callback_data=f"start_receipt_{city_key}")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         ]
     )
 
@@ -223,18 +279,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("shiraz"))
 
-    elif query.data == "start_receipt_tehran":
-        context.user_data["ready_for_receipt"] = "tehran"
+    elif query.data.startswith("start_receipt_"):
+        city = query.data.split("_", 2)[2]
+        context.user_data["ready_for_receipt"] = city
+        receipt_text = RECEIPT_MESSAGES.get(city, "📝 برای نهایی کردن ثبت‌نام، فیش واریزی‌تون رو همینجا بفرستید.")
         await query.edit_message_text(
-            TEHRAN_RECEIPT_MESSAGE,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]]),
+            receipt_text,
+            reply_markup=receipt_keyboard(city),
         )
 
-    elif query.data == "start_receipt_esfahan":
-        context.user_data["ready_for_receipt"] = "esfahan"
+    elif query.data.startswith("refund_policy_"):
+        city = query.data.split("_", 2)[2]
         await query.edit_message_text(
-            ESFAHAN_RECEIPT_MESSAGE,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]]),
+            REFUND_POLICY_MESSAGE,
+            reply_markup=refund_policy_keyboard(city),
         )
 
     elif query.data.startswith("open_") or query.data.startswith("close_"):
@@ -453,10 +511,4 @@ def index():
         # همیشه از همون loop واحد استفاده می‌کنیم، نه یک loop تازه در هر ریکوئست
         loop.run_until_complete(telegram_app.process_update(update))
         return "OK", 200
-    return "Server is running!", 200
-
-
-if __name__ == "__main__":
-    loop.run_until_complete(_startup())
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    return "Server is

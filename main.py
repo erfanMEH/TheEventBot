@@ -47,7 +47,7 @@ CITY_DISPLAY_NAMES = {
 
 DYNAMIC_CONFIRM_DAY = {
     "tehran": "جمعه",
-    "esfahan": "سه‌شنبه",
+    "esfahan": "پنجشنبه",
     "shiraz": "رویداد شیراز",
 }
 
@@ -70,12 +70,16 @@ TEHRAN_EVENT_MESSAGE = (
     "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
 )
 
+# تغییر متن رویداد اصفهان به تاریخ و مشخصات جدید سال ۱۴۰۵
 ESFAHAN_EVENT_MESSAGE = (
     "مهدکودک‌بزرگترها اصفهان\n\n"
     "👫مخاطب رویداد : بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
-    "📅زمان:\n۴ آذر ۱۴۰۴\nساعت ۱۷ الی ۲۰\n\n"
-    "📍مکان: \nخونه‌نقطه🌱\n\n"
-    "☁️ هزینه: ۴۵۰ هزارتومان \n\n"
+    "📅زمان:\n"
+    "پنجشنبه، ۱۱ تیر ۱۴۰۵\n"
+    "ساعت 17 الی 20\n\n"
+    "📍مکان: \n"
+    "کلینیک نهال، خیابان شیخ‌صدوق\n\n"
+    "☁️ هزینه: ۸۵۰ هزارتومان\n\n"
     "🔸شرایط ثبت نام با تخفیف:\n"
     "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
     "(نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
@@ -108,6 +112,32 @@ ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر
 
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
+
+# متن قوانین استرداد وجه
+REFUND_RULES_MESSAGE = (
+    "🧸 قوانین استرداد ثبت‌نام «مهدکودک بزرگترها»\n\n"
+    "ما توی مهدکودک بزرگترها می‌خوایم هم برنامه‌هامون منظم باشه، هم شما با خیال راحت ثبت‌نام کنید. "
+    "برای همین قوانین استرداد رو اینجا کامل براتون نوشتیم🫶🏻:\n\n"
+    "📅 ۱. بازه زمانی استرداد\n\n"
+    "اگر تا ۴۸ ساعت قبل از شروع برنامه انصراف بدید، هزینه‌تون به‌صورت کامل قابل استرداده.\n"
+    "(بزرگسالیم و قول‌ و قرار داریم😌)\n\n"
+    "💸 ۲. نحوه استرداد\n\n"
+    "در بازه‌ی مجاز، هزینه به انتخاب شما:\n"
+    "کامل بازپرداخت میشه.\n"
+    "یا\n"
+    "تبدیل میشه به اعتبار برای شرکت در برنامه‌های بعدی.\n"
+    "(برای اونایی که هی دلشون می‌خواد برگردن مهد 🤭)\n\n"
+    "⏱️ ۳. سرعت بررسی\n\n"
+    "درخواست استرداد شما در کمتر از ۶ ساعت بررسی میشه.\n"
+    "(چون می‌دونیم حوصله معطلی ندارین.)\n\n"
+    "🤧 ۴. استثنا: مریضی\n\n"
+    "اگه قبل از برنامه مریض شدید و تا ۲۴ ساعت قبل به ما اطلاع بدید، هزینه همچنان قابل استرداده.\n"
+    "سلامتی‌تون مهم‌تر از هر برنامه‌ایه ❤️\n\n"
+    "🛎️ ۵. مسیر درخواست استرداد\n\n"
+    "برای ثبت درخواست فقط کافیه به پشتیبانی پیام بدید:\n"
+    f"@{SUPPORT_USERNAME}\n"
+    "(پشتیبانی ما از مربیای مهربون مهد هم مهربون‌تره 🥺)"
+)
 
 # ------------------------- توابع کمکی -------------------------
 
@@ -223,19 +253,44 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("shiraz"))
 
+    # هندلرهای مربوط به نهایی کردن ثبت‌نام با دکمه قوانین استرداد اضافه شده
     elif query.data == "start_receipt_tehran":
         context.user_data["ready_for_receipt"] = "tehran"
-        await query.edit_message_text(
-            TEHRAN_RECEIPT_MESSAGE,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]]),
-        )
+        keyboard = [
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="refund_rules_tehran")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_tehran")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
+        await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == "start_receipt_esfahan":
         context.user_data["ready_for_receipt"] = "esfahan"
+        keyboard = [
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="refund_rules_esfahan")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_esfahan")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
+        await query.edit_message_text(ESFAHAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == "start_receipt_shiraz":
+        context.user_data["ready_for_receipt"] = "shiraz"
+        keyboard = [
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="refund_rules_shiraz")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_shiraz")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
         await query.edit_message_text(
-            ESFAHAN_RECEIPT_MESSAGE,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")]]),
+            "📝 لطفا فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+    # هندلرهای دکمه قوانین استرداد (تفکیک بر اساس شهر برای بازگشت درست)
+    elif query.data.startswith("refund_rules_"):
+        current_city = query.data.split("_")[2]
+        keyboard = [
+            [InlineKeyboardButton("بازگشت به نهایی کردن ثبت‌نام", callback_data=f"start_receipt_{current_city}")]
+        ]
+        await query.edit_message_text(REFUND_RULES_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data.startswith("open_") or query.data.startswith("close_"):
         city = query.data.split("_")[1]
@@ -248,7 +303,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["notify_city"] = city_key
         city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
 
-        # حذف دکمه‌ی «خبردار شو» از پیام قبلی تا کاربر دوبار روش نزنه
         await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel("event_kindergarten"))
 
         contact_keyboard = ReplyKeyboardMarkup(
@@ -372,7 +426,6 @@ async def contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city_key = context.user_data.get("notify_city")
 
     if not city_key:
-        # کانتکتی که بدون طی کردن مسیر «خبردار شو» اومده رو نادیده می‌گیریم
         return
 
     contact = update.message.contact
@@ -409,34 +462,19 @@ async def cancel_notify_handler(update: Update, context: ContextTypes.DEFAULT_TY
 async def set_bot_commands(app):
     await app.bot.set_my_commands([BotCommand("start", "شروع ربات")])
 
-# ساخت اپلیکیشن تلگرام
 telegram_app = ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands).build()
-
-# ایجاد برنامه Flask
 app = Flask(__name__)
 
-# رجیستر کردن هندلرهای تلگرام
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 telegram_app.add_handler(MessageHandler(filters.CONTACT, contact_handler))
 telegram_app.add_handler(MessageHandler(filters.Regex("^انصراف$"), cancel_notify_handler))
 
-
-# یک event loop واحد برای کل عمر اپلیکیشن می‌سازیم و هیچ‌وقت نمی‌بندیمش.
-# (اگه به‌جای این از asyncio.run() در هر ریکوئست استفاده کنیم، چون asyncio.run
-#  هر بار loop رو می‌بنده ولی کلاینت HTTP داخلی تلگرام به همون loop وصل می‌مونه،
-#  در ریکوئست بعدی خطای "Event loop is closed" می‌گیریم.)
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
-
 async def _startup():
-    """
-    این تابع فقط یک‌بار، قبل از بالا آمدن سرور اجرا می‌شه:
-    - اپلیکیشن تلگرام رو initialize می‌کنه (روی همون loop واحد)
-    - وب‌هوک رو ست می‌کنه (اگه WEBHOOK_URL ست شده باشه)
-    """
     await telegram_app.initialize()
     if WEBHOOK_URL:
         await telegram_app.bot.set_webhook(url=WEBHOOK_URL)
@@ -444,19 +482,9 @@ async def _startup():
     else:
         print("⚠️ WEBHOOK_URL تنظیم نشده؛ وب‌هوک ست نشد.")
 
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         data = request.get_json()
         update = Update.de_json(data, telegram_app.bot)
-        # همیشه از همون loop واحد استفاده می‌کنیم، نه یک loop تازه در هر ریکوئست
-        loop.run_until_complete(telegram_app.process_update(update))
-        return "OK", 200
-    return "Server is running!", 200
-
-
-if __name__ == "__main__":
-    loop.run_until_complete(_startup())
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+        loop.run_

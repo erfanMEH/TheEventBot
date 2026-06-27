@@ -186,7 +186,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     greeting = (
         "سلام 🌱\n"
-        "خوشحالم که می‌خواین بیاین تا برای چند لحظه زندگیِ روزمره رو متوقف کنیم🥰"
+        "خوشحالیم که می‌خوای بیای تا برای چند لحظه زندگی روزمره رو متوقف کنیم🥰"
     )
 
     if update.message:

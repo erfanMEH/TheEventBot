@@ -226,12 +226,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return "✅ " if registration_status[city] else ""
 
         keyboard = [
-            [InlineKeyboardButton(f"{city_status('esfahan')}اصفهان", callback_data="session_esfahan")],
-            [InlineKeyboardButton(f"{city_status('tehran')}تهران", callback_data="session_tehran")],
-            [InlineKeyboardButton(f"{city_status('shiraz')}شیراز", callback_data="session_shiraz")],
-            [InlineKeyboardButton(f"{city_status('mashhad')}مشهد", callback_data="session_mashhad")],
-            [InlineKeyboardButton(f"{city_status('rasht')}رشت", callback_data="session_rasht")],
-            [InlineKeyboardButton(f"{city_status('yazd')}یزد", callback_data="session_yazd")],
+            [
+                InlineKeyboardButton(f"{city_status('esfahan')}اصفهان", callback_data="session_esfahan"),
+                InlineKeyboardButton(f"{city_status('tehran')}تهران", callback_data="session_tehran"),
+            ],
+            [
+                InlineKeyboardButton(f"{city_status('shiraz')}شیراز", callback_data="session_shiraz"),
+                InlineKeyboardButton(f"{city_status('mashhad')}مشهد", callback_data="session_mashhad"),
+            ],
+            [
+                InlineKeyboardButton(f"{city_status('rasht')}رشت", callback_data="session_rasht"),
+                InlineKeyboardButton(f"{city_status('yazd')}یزد", callback_data="session_yazd"),
+            ],
             [InlineKeyboardButton("بازگشت", callback_data="start")],
             [InlineKeyboardButton("پشتیبانی", callback_data="support")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")],

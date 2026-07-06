@@ -35,12 +35,18 @@ registration_status = {
     "esfahan": False,
     "tehran": False,
     "shiraz": False,
+    "mashhad": False,
+    "rasht": False,
+    "yazd": False,
 }
 
 CITY_DISPLAY_NAMES = {
     "esfahan": "اصفهان",
     "tehran": "تهران",
     "shiraz": "شیراز",
+    "mashhad": "مشهد",
+    "rasht": "رشت",
+    "yazd": "یزد",
 }
 
 # ------------------------- پیام‌های آماده -------------------------
@@ -182,6 +188,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🔒 بستن شیراز", callback_data="close_shiraz"),
             InlineKeyboardButton("🔓 باز کردن شیراز", callback_data="open_shiraz"),
         ])
+        keyboard.append([
+            InlineKeyboardButton("🔒 بستن مشهد", callback_data="close_mashhad"),
+            InlineKeyboardButton("🔓 باز کردن مشهد", callback_data="open_mashhad"),
+        ])
+        keyboard.append([
+            InlineKeyboardButton("🔒 بستن رشت", callback_data="close_rasht"),
+            InlineKeyboardButton("🔓 باز کردن رشت", callback_data="open_rasht"),
+        ])
+        keyboard.append([
+            InlineKeyboardButton("🔒 بستن یزد", callback_data="close_yazd"),
+            InlineKeyboardButton("🔓 باز کردن یزد", callback_data="open_yazd"),
+        ])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     greeting = (
@@ -211,6 +229,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(f"{city_status('esfahan')}اصفهان", callback_data="session_esfahan")],
             [InlineKeyboardButton(f"{city_status('tehran')}تهران", callback_data="session_tehran")],
             [InlineKeyboardButton(f"{city_status('shiraz')}شیراز", callback_data="session_shiraz")],
+            [InlineKeyboardButton(f"{city_status('mashhad')}مشهد", callback_data="session_mashhad")],
+            [InlineKeyboardButton(f"{city_status('rasht')}رشت", callback_data="session_rasht")],
+            [InlineKeyboardButton(f"{city_status('yazd')}یزد", callback_data="session_yazd")],
             [InlineKeyboardButton("بازگشت", callback_data="start")],
             [InlineKeyboardButton("پشتیبانی", callback_data="support")],
             [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")],
@@ -253,6 +274,42 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("shiraz"))
 
+    elif query.data == "session_mashhad":
+        context.user_data["city"] = "مشهد"
+        if registration_status["mashhad"]:
+            keyboard = [
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data="start_receipt_mashhad")],
+                [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            ]
+            await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+        else:
+            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("mashhad"))
+
+    elif query.data == "session_rasht":
+        context.user_data["city"] = "رشت"
+        if registration_status["rasht"]:
+            keyboard = [
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data="start_receipt_rasht")],
+                [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            ]
+            await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+        else:
+            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("rasht"))
+
+    elif query.data == "session_yazd":
+        context.user_data["city"] = "یزد"
+        if registration_status["yazd"]:
+            keyboard = [
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data="start_receipt_yazd")],
+                [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            ]
+            await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+        else:
+            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("yazd"))
+
     elif query.data == "start_receipt_tehran":
         context.user_data["ready_for_receipt"] = "tehran"
         keyboard = [
@@ -282,6 +339,33 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📝 لطفا فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست.",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+    elif query.data == "start_receipt_mashhad":
+        context.user_data["ready_for_receipt"] = "mashhad"
+        keyboard = [
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_mashhad")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_mashhad")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
+        await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == "start_receipt_rasht":
+        context.user_data["ready_for_receipt"] = "rasht"
+        keyboard = [
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_rasht")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_rasht")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
+        await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == "start_receipt_yazd":
+        context.user_data["ready_for_receipt"] = "yazd"
+        keyboard = [
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_yazd")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_yazd")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
+        await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data.startswith("rules_"):
         current_city = query.data.split("_")[1]

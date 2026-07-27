@@ -569,6 +569,44 @@ async def send_to_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ ارسال ناموفق بود: {e}")
 
+# ------------------------- ارسال پیام به چند نفر -------------------------
+
+async def broadcast_to_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+
+    if not context.args or len(context.args) < 2:
+        await update.message.reply_text("فرمت درست: /broadcast <آیدی۱> <آیدی۲> ... <متن پیام>")
+        return
+
+    target_ids = []
+    message_words = []
+    for i, word in enumerate(context.args):
+        if word.isdigit():
+            target_ids.append(int(word))
+        else:
+            message_words = context.args[i:]
+            break
+
+    if not target_ids or not message_words:
+        await update.message.reply_text("فرمت درست: /broadcast <آیدی۱> <آیدی۲> ... <متن پیام>")
+        return
+
+    message_text = " ".join(message_words)
+
+    success, failed = [], []
+    for uid in target_ids:
+        try:
+            await context.bot.send_message(chat_id=uid, text=message_text)
+            success.append(uid)
+        except Exception as e:
+            failed.append(f"{uid} ({e})")
+
+    result = f"✅ ارسال شد به: {', '.join(map(str, success)) or 'هیچکس'}"
+    if failed:
+        result += f"\n❌ ناموفق: {', '.join(failed)}"
+    await update.message.reply_text(result)
+
 # ------------------------- تنظیمات بات و Flask -------------------------
 
 async def set_bot_commands(app):
@@ -579,6 +617,7 @@ app = Flask(__name__)
 
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CommandHandler("send", send_to_user))
+telegram_app.add_handler(CommandHandler("broadcast", broadcast_to_users))
 telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 telegram_app.add_handler(MessageHandler(filters.CONTACT, contact_handler))

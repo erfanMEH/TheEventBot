@@ -80,7 +80,7 @@ ESFAHAN_EVENT_MESSAGE = (
     "مهدکودک‌بزرگترها اصفهان\n\n"
     "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
     "📅زمان:\n"
-    "پنجشنبه، ۸ مرداد ۱۴۰۵\n"
+    "جمعه، ۲ مرداد ۱۴۰۵\n"
     "ساعت ۱۷ تا ۲۰\n\n"
     "📍مکان: \n"
     "کودکستان و پیش دبستانی باغ طوبی، خیابان دانشگاه\n\n"
@@ -545,6 +545,30 @@ async def cancel_notify_handler(update: Update, context: ContextTypes.DEFAULT_TY
         context.user_data["notify_city"] = None
         await update.message.reply_text("باشه، فعلاً بی‌خیال 🌱", reply_markup=ReplyKeyboardRemove())
 
+# ------------------------- ارسال پیام دستی توسط ادمین -------------------------
+
+async def send_to_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+
+    if not context.args or len(context.args) < 2:
+        await update.message.reply_text("فرمت درست: /send <آیدی عددی> <متن پیام>")
+        return
+
+    try:
+        target_id = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text("❌ آیدی باید عددی باشه.")
+        return
+
+    message_text = " ".join(context.args[1:])
+
+    try:
+        await context.bot.send_message(chat_id=target_id, text=message_text)
+        await update.message.reply_text("✅ پیام ارسال شد.")
+    except Exception as e:
+        await update.message.reply_text(f"❌ ارسال ناموفق بود: {e}")
+
 # ------------------------- تنظیمات بات و Flask -------------------------
 
 async def set_bot_commands(app):
@@ -554,6 +578,7 @@ telegram_app = ApplicationBuilder().token(BOT_TOKEN).post_init(set_bot_commands)
 app = Flask(__name__)
 
 telegram_app.add_handler(CommandHandler("start", start))
+telegram_app.add_handler(CommandHandler("send", send_to_user))
 telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 telegram_app.add_handler(MessageHandler(filters.CONTACT, contact_handler))

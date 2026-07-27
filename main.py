@@ -484,7 +484,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     user_id = user.id
 
-    sender_info = f"از طرف {user.full_name} (@{user.username or 'بدون نام کاربری'})"
+    sender_info = f"از طرف {user.full_name} (@{user.username or 'بدون نام کاربری'})\nآیدی عددی: {user_id}"
     full_caption = f"{sender_info}\n\nکپشن:\n{caption}"
 
     confirm_buttons = InlineKeyboardMarkup(

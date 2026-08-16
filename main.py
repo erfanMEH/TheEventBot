@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import asyncio
 import jdatetime
@@ -58,10 +59,12 @@ DB_ACTION_LABELS = {
     "set": "📥 تنظیم دیتابیس (جایگزینی)",
     "add": "➕ افزودن به دیتابیس",
     "send": "📤 ارسال پیام به این دیتابیس",
+    "collect": "🧲 جمع‌آوری خودکار از پیام‌ها",
 }
 DB_LABEL_TO_ACTION = {v: k for k, v in DB_ACTION_LABELS.items()}
 
 CANCEL_LABEL = "🔙 لغو"
+STOP_COLLECT_LABEL = "⏹ پایان جمع‌آوری"
 
 # ------------------------- پیام‌های آماده -------------------------
 
@@ -210,11 +213,15 @@ def db_action_keyboard() -> ReplyKeyboardMarkup:
             [KeyboardButton(DB_ACTION_LABELS["set"])],
             [KeyboardButton(DB_ACTION_LABELS["add"])],
             [KeyboardButton(DB_ACTION_LABELS["send"])],
+            [KeyboardButton(DB_ACTION_LABELS["collect"])],
             [KeyboardButton(CANCEL_LABEL)],
         ],
         resize_keyboard=True,
         one_time_keyboard=True,
     )
+
+def collecting_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([[KeyboardButton(STOP_COLLECT_LABEL)]], resize_keyboard=True)
 
 def cancel_only_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup([[KeyboardButton(CANCEL_LABEL)]], resize_keyboard=True, one_time_keyboard=True)
@@ -732,12 +739,55 @@ async def admin_db_text_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await update.message.reply_text("لطفا یکی از دکمه‌ها رو انتخاب کن.")
             return
         context.user_data["db_action"] = action
+
+        if action == "collect":
+            context.user_data["db_flow"] = "collecting"
+            await update.message.reply_text(
+                "حالا هر پیامی که آیدی عددی توش باشه رو بفرست یا فوروارد کن (مثل پیام‌های فیش یا اطلاع‌رسانی).\n"
+                "به محض تموم شدن، «⏹ پایان جمع‌آوری» رو بزن.",
+                reply_markup=collecting_keyboard(),
+            )
+            return
+
         context.user_data["db_flow"] = "awaiting_input"
         if action == "send":
             prompt = "متن پیامی که می‌خوای ارسال بشه رو بفرست:"
         else:
             prompt = "آیدی‌های عددی رو بفرست (هر تعداد که می‌خوای، با فاصله یا خط جدید جدا کن):"
         await update.message.reply_text(prompt, reply_markup=cancel_only_keyboard())
+        return
+
+    if flow == "collecting":
+        city_key = context.user_data.get("db_city")
+        city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
+
+        if text == STOP_COLLECT_LABEL:
+            databases = load_databases()
+            total = len(databases.get(city_key, []))
+            clear_db_flow(context)
+            await update.message.reply_text(
+                f"✅ جمع‌آوری برای «{city_name}» تموم شد. تعداد کل فعلی: {total}",
+                reply_markup=ReplyKeyboardRemove(),
+            )
+            return
+
+        found_ids = [int(x) for x in re.findall(r"آیدی عددی:\s*(\d+)", text)]
+        if not found_ids:
+            await update.message.reply_text("❌ توی این پیام آیدی عددی پیدا نشد. پیام بعدی رو بفرست.")
+            return
+
+        databases = load_databases()
+        existing = set(databases.get(city_key, []))
+        new_ones = [uid for uid in found_ids if uid not in existing]
+        existing.update(found_ids)
+        databases[city_key] = list(existing)
+        save_databases(databases)
+
+        await update.message.reply_text(
+            f"➕ اضافه شد: {', '.join(map(str, found_ids))}"
+            + (f" (جدید: {', '.join(map(str, new_ones))})" if new_ones != found_ids else "")
+            + f"\nمجموع فعلی «{city_name}»: {len(existing)}"
+        )
         return
 
     if flow == "awaiting_input":

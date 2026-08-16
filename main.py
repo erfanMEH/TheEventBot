@@ -736,6 +736,7 @@ async def admin_db_text_handler(update: Update, context: ContextTypes.DEFAULT_TY
         return
 
     if flow == "choosing_action":
+        city_key = context.user_data.get("db_city")
         action = DB_LABEL_TO_ACTION.get(text)
         if not action:
             await update.message.reply_text("لطفا یکی از دکمه‌ها رو انتخاب کن.")

@@ -1,4 +1,5 @@
 import os
+import json
 import asyncio
 import jdatetime
 from flask import Flask, request
@@ -31,6 +32,8 @@ CHANNEL_USERNAME = "bigkidkindergarten"
 CARD_NUMBER = "6219861815202733"
 CARD_OWNER = "ثمین دهقانی"
 
+DB_FILE = "databases.json"
+
 registration_status = {
     "esfahan": False,
     "tehran": False,
@@ -48,6 +51,17 @@ CITY_DISPLAY_NAMES = {
     "rasht": "رشت",
     "yazd": "یزد",
 }
+
+CITY_NAME_TO_KEY = {v: k for k, v in CITY_DISPLAY_NAMES.items()}
+
+DB_ACTION_LABELS = {
+    "set": "📥 تنظیم دیتابیس (جایگزینی)",
+    "add": "➕ افزودن به دیتابیس",
+    "send": "📤 ارسال پیام به این دیتابیس",
+}
+DB_LABEL_TO_ACTION = {v: k for k, v in DB_ACTION_LABELS.items()}
+
+CANCEL_LABEL = "🔙 لغو"
 
 # ------------------------- پیام‌های آماده -------------------------
 
@@ -80,7 +94,7 @@ ESFAHAN_EVENT_MESSAGE = (
     "مهدکودک‌بزرگترها اصفهان\n\n"
     "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
     "📅زمان:\n"
-    "پنجشنبه، ۸ مرداد ۱۴۰۵\n"
+    "جمعه، ۲ مرداد ۱۴۰۵\n"
     "ساعت ۱۷ تا ۲۰\n\n"
     "📍مکان: \n"
     "کودکستان و پیش دبستانی باغ طوبی، خیابان دانشگاه\n\n"
@@ -166,6 +180,50 @@ def closed_event_keyboard(city_key: str) -> InlineKeyboardMarkup:
         ]
     )
 
+# ------------------------- توابع دیتابیس شهرها -------------------------
+
+def load_databases():
+    try:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+def save_databases(data):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def city_selection_keyboard() -> ReplyKeyboardMarkup:
+    items = list(CITY_DISPLAY_NAMES.items())
+    rows = []
+    for i in range(0, len(items), 2):
+        row = [KeyboardButton(items[i][1])]
+        if i + 1 < len(items):
+            row.append(KeyboardButton(items[i + 1][1]))
+        rows.append(row)
+    rows.append([KeyboardButton(CANCEL_LABEL)])
+    return ReplyKeyboardMarkup(rows, resize_keyboard=True, one_time_keyboard=True)
+
+def db_action_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        [
+            [KeyboardButton(DB_ACTION_LABELS["set"])],
+            [KeyboardButton(DB_ACTION_LABELS["add"])],
+            [KeyboardButton(DB_ACTION_LABELS["send"])],
+            [KeyboardButton(CANCEL_LABEL)],
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+
+def cancel_only_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([[KeyboardButton(CANCEL_LABEL)]], resize_keyboard=True, one_time_keyboard=True)
+
+def clear_db_flow(context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["db_flow"] = None
+    context.user_data["db_city"] = None
+    context.user_data["db_action"] = None
+
 # ------------------------- شروع /start -------------------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -200,6 +258,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🔒 بستن یزد", callback_data="close_yazd"),
             InlineKeyboardButton("🔓 باز کردن یزد", callback_data="open_yazd"),
         ])
+        keyboard.append([
+            InlineKeyboardButton("🗂 مدیریت دیتابیس‌های شهرها", callback_data="db_menu"),
+        ])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     greeting = (
@@ -220,6 +281,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == "start":
         await start(update, context)
+
+    elif query.data == "db_menu":
+        if update.effective_user.id != ADMIN_CHAT_ID:
+            return
+        context.user_data["db_flow"] = "choosing_city"
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="کدوم شهر رو می‌خوای مدیریت کنی؟",
+            reply_markup=city_selection_keyboard(),
+        )
 
     elif query.data == "event_kindergarten":
         def city_status(city):
@@ -607,6 +678,114 @@ async def broadcast_to_users(update: Update, context: ContextTypes.DEFAULT_TYPE)
         result += f"\n❌ ناموفق: {', '.join(failed)}"
     await update.message.reply_text(result)
 
+# ------------------------- مدیریت دیتابیس‌های شهرها -------------------------
+
+async def db_menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+    context.user_data["db_flow"] = "choosing_city"
+    await update.message.reply_text("کدوم شهر رو می‌خوای مدیریت کنی؟", reply_markup=city_selection_keyboard())
+
+
+async def list_databases_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+    databases = load_databases()
+    lines = ["📊 دیتابیس‌های ثبت‌شده:"]
+    for key, name in CITY_DISPLAY_NAMES.items():
+        count = len(databases.get(key, []))
+        lines.append(f"{name}: {count} نفر")
+    await update.message.reply_text("\n".join(lines))
+
+
+async def admin_db_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+
+    flow = context.user_data.get("db_flow")
+    if not flow:
+        return
+
+    text = update.message.text.strip()
+
+    if text == CANCEL_LABEL:
+        clear_db_flow(context)
+        await update.message.reply_text("لغو شد.", reply_markup=ReplyKeyboardRemove())
+        return
+
+    if flow == "choosing_city":
+        city_key = CITY_NAME_TO_KEY.get(text)
+        if not city_key:
+            await update.message.reply_text("لطفا یکی از دکمه‌های شهر رو انتخاب کن.")
+            return
+        context.user_data["db_city"] = city_key
+        context.user_data["db_flow"] = "choosing_action"
+        await update.message.reply_text(
+            f"شهر انتخابی: {text}\nحالا چیکار کنیم؟",
+            reply_markup=db_action_keyboard(),
+        )
+        return
+
+    if flow == "choosing_action":
+        action = DB_LABEL_TO_ACTION.get(text)
+        if not action:
+            await update.message.reply_text("لطفا یکی از دکمه‌ها رو انتخاب کن.")
+            return
+        context.user_data["db_action"] = action
+        context.user_data["db_flow"] = "awaiting_input"
+        if action == "send":
+            prompt = "متن پیامی که می‌خوای ارسال بشه رو بفرست:"
+        else:
+            prompt = "آیدی‌های عددی رو بفرست (هر تعداد که می‌خوای، با فاصله یا خط جدید جدا کن):"
+        await update.message.reply_text(prompt, reply_markup=cancel_only_keyboard())
+        return
+
+    if flow == "awaiting_input":
+        city_key = context.user_data.get("db_city")
+        action = context.user_data.get("db_action")
+        city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
+        databases = load_databases()
+
+        if action in ("set", "add"):
+            ids = [int(tok) for tok in text.replace(",", " ").split() if tok.isdigit()]
+            if not ids:
+                await update.message.reply_text("هیچ آیدی معتبری پیدا نشد. دوباره امتحان کن یا لغو بزن.")
+                return
+            if action == "set":
+                databases[city_key] = ids
+            else:
+                existing = set(databases.get(city_key, []))
+                existing.update(ids)
+                databases[city_key] = list(existing)
+            save_databases(databases)
+            await update.message.reply_text(
+                f"✅ دیتابیس «{city_name}» به‌روز شد. تعداد کل: {len(databases[city_key])}",
+                reply_markup=ReplyKeyboardRemove(),
+            )
+
+        elif action == "send":
+            target_ids = databases.get(city_key, [])
+            if not target_ids:
+                await update.message.reply_text(
+                    f"دیتابیسی برای «{city_name}» ثبت نشده.",
+                    reply_markup=ReplyKeyboardRemove(),
+                )
+            else:
+                success_count, failed_count = 0, 0
+                for uid in target_ids:
+                    try:
+                        await context.bot.send_message(chat_id=uid, text=text)
+                        success_count += 1
+                    except Exception:
+                        failed_count += 1
+                result_text = f"✅ ارسال شد به {success_count} نفر از دیتابیس «{city_name}»"
+                if failed_count:
+                    result_text += f"\n❌ ناموفق برای {failed_count} نفر"
+                await update.message.reply_text(result_text, reply_markup=ReplyKeyboardRemove())
+
+        clear_db_flow(context)
+        return
+
 # ------------------------- تنظیمات بات و Flask -------------------------
 
 async def set_bot_commands(app):
@@ -618,10 +797,13 @@ app = Flask(__name__)
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CommandHandler("send", send_to_user))
 telegram_app.add_handler(CommandHandler("broadcast", broadcast_to_users))
+telegram_app.add_handler(CommandHandler("db", db_menu_command))
+telegram_app.add_handler(CommandHandler("listdb", list_databases_command))
 telegram_app.add_handler(CallbackQueryHandler(button_handler))
 telegram_app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 telegram_app.add_handler(MessageHandler(filters.CONTACT, contact_handler))
 telegram_app.add_handler(MessageHandler(filters.Regex("^انصراف$"), cancel_notify_handler))
+telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, admin_db_text_handler))
 
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)

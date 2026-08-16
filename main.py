@@ -60,6 +60,7 @@ DB_ACTION_LABELS = {
     "add": "➕ افزودن به دیتابیس",
     "send": "📤 ارسال پیام به این دیتابیس",
     "collect": "🧲 جمع‌آوری خودکار از پیام‌ها",
+    "view": "👁 نمایش آیدی‌ها",
 }
 DB_LABEL_TO_ACTION = {v: k for k, v in DB_ACTION_LABELS.items()}
 
@@ -214,6 +215,7 @@ def db_action_keyboard() -> ReplyKeyboardMarkup:
             [KeyboardButton(DB_ACTION_LABELS["add"])],
             [KeyboardButton(DB_ACTION_LABELS["send"])],
             [KeyboardButton(DB_ACTION_LABELS["collect"])],
+            [KeyboardButton(DB_ACTION_LABELS["view"])],
             [KeyboardButton(CANCEL_LABEL)],
         ],
         resize_keyboard=True,
@@ -739,6 +741,32 @@ async def admin_db_text_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await update.message.reply_text("لطفا یکی از دکمه‌ها رو انتخاب کن.")
             return
         context.user_data["db_action"] = action
+
+        if action == "view":
+            databases = load_databases()
+            ids = databases.get(city_key, [])
+            clear_db_flow(context)
+            if not ids:
+                city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
+                await update.message.reply_text(
+                    f"دیتابیس «{city_name}» خالیه.",
+                    reply_markup=ReplyKeyboardRemove(),
+                )
+                return
+            lines = [f"{i + 1}. {uid}" for i, uid in enumerate(ids)]
+            chunks, current_chunk, current_len = [], [], 0
+            for line in lines:
+                if current_len + len(line) + 1 > 3500:
+                    chunks.append("\n".join(current_chunk))
+                    current_chunk, current_len = [], 0
+                current_chunk.append(line)
+                current_len += len(line) + 1
+            if current_chunk:
+                chunks.append("\n".join(current_chunk))
+            for idx, chunk_text in enumerate(chunks):
+                markup = ReplyKeyboardRemove() if idx == 0 else None
+                await update.message.reply_text(chunk_text, reply_markup=markup)
+            return
 
         if action == "collect":
             context.user_data["db_flow"] = "collecting"

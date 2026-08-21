@@ -13,6 +13,7 @@ from telegram import (
     KeyboardButton,
     ReplyKeyboardRemove,
 )
+from telegram.error import RetryAfter
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -823,7 +824,7 @@ async def admin_db_text_handler(update: Update, context: ContextTypes.DEFAULT_TY
                 await update.message.reply_text("هیچ آیدی معتبری پیدا نشد. دوباره امتحان کن یا لغو بزن.")
                 return
             if action == "set":
-                databases[city_key] = ids
+                databases[city_key] = list(dict.fromkeys(ids))
             else:
                 existing = set(databases.get(city_key, []))
                 existing.update(ids)
@@ -835,23 +836,30 @@ async def admin_db_text_handler(update: Update, context: ContextTypes.DEFAULT_TY
             )
 
         elif action == "send":
-            target_ids = databases.get(city_key, [])
+            target_ids = list(dict.fromkeys(databases.get(city_key, [])))
             if not target_ids:
                 await update.message.reply_text(
                     f"دیتابیسی برای «{city_name}» ثبت نشده.",
                     reply_markup=ReplyKeyboardRemove(),
                 )
             else:
-                success_count, failed_count = 0, 0
+                success_count = 0
+                failed_ids = []
                 for uid in target_ids:
-                    try:
-                        await context.bot.send_message(chat_id=uid, text=text)
-                        success_count += 1
-                    except Exception:
-                        failed_count += 1
-                result_text = f"✅ ارسال شد به {success_count} نفر از دیتابیس «{city_name}»"
-                if failed_count:
-                    result_text += f"\n❌ ناموفق برای {failed_count} نفر"
+                    for attempt in range(2):
+                        try:
+                            await context.bot.send_message(chat_id=uid, text=text)
+                            success_count += 1
+                            break
+                        except RetryAfter as e:
+                            await asyncio.sleep(e.retry_after + 1)
+                        except Exception:
+                            failed_ids.append(uid)
+                            break
+                    await asyncio.sleep(0.05)
+                result_text = f"✅ ارسال شد به {success_count} نفر از دیتابیس «{city_name}» (بدون تکرار)"
+                if failed_ids:
+                    result_text += f"\n❌ ناموفق برای {len(failed_ids)} نفر:\n" + "\n".join(map(str, failed_ids))
                 await update.message.reply_text(result_text, reply_markup=ReplyKeyboardRemove())
 
         clear_db_flow(context)

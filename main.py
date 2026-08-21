@@ -71,7 +71,7 @@ STOP_COLLECT_LABEL = "⏹ پایان جمع‌آوری"
 
 DYNAMIC_CONFIRM_DAY = {
     "tehran": "جمعه",
-    "esfahan": "پنجشنبه",
+    "esfahan": "جمعه",
     "shiraz": "رویداد شیراز",
 }
 

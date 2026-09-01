@@ -106,6 +106,19 @@ ESFAHAN_EVENT_MESSAGE = (
     "☁️ هزینه برای هر زوج: یک میلیون و نهصد هزارتومان"
 )
 
+SHIRAZ_EVENT_MESSAGE = (
+    "اولین مهدکودک‌بزرگترهای شیراز\n\n"
+    "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون میخواد یکم بچگی کنن\n\n"
+    "📅زمان:\n"
+    "جمعه، ۱۳ شهریورماه ۱۴۰۵\n\n"
+    "📍مکان: \n"
+    "محدوده بلوار استقلال، باغ حوض\n\n"
+    "☁️ هزینه: یک میلیون و پانصد و پنجاه هزارتومان\n\n"
+    "🔸شرایط ثبت نام با تخفیف:\n"
+    "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
+    "نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
+)
+
 TEHRAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
 یک نفر : 590 هزارتومان
@@ -125,6 +138,23 @@ ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر
 هزینه برای هر زوج: یک میلیون و نهصد هزارتومان
 
 📤 حالا مبلغ رو به این شماره کارت واریز کن و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
+
+{CARD_NUMBER}
+به نام {CARD_OWNER}
+
+💥 راستی، ارسال فیش به معنای قبول کردن قوانین استرداده پس اگه دوست داشتی، یه سر به قوانینمون بزن🫠"""
+
+SHIRAZ_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
+
+یک نفر : 1.550 هزارتومان
+دونفر :  2.945 هزارتومان
+سه نفر: 4.340 هزارتومان
+چهار نفر: 5.735 هزارتومان
+پنج نفر: 7.130 هزارتومان
+و...
+
+📤 حالا مبلغ رو به این شماره کارت واریز کن
+و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
 
 {CARD_NUMBER}
 به نام {CARD_OWNER}
@@ -349,7 +379,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             ]
-            await query.edit_message_text("مهدکودک‌بزرگترها شیراز ✨", reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(SHIRAZ_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("shiraz"))
 
@@ -415,7 +445,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         ]
         await query.edit_message_text(
-            "📝 لطفا فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست.",
+            SHIRAZ_RECEIPT_MESSAGE,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 

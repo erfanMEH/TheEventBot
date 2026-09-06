@@ -72,8 +72,9 @@ STOP_COLLECT_LABEL = "⏹ پایان جمع‌آوری"
 
 DYNAMIC_CONFIRM_DAY = {
     "tehran": "جمعه",
-    "esfahan": "جمعه",
+    "esfahan": "پنجشنبه",
     "shiraz": "رویداد شیراز",
+    "mashhad": "جمعه",
 }
 
 CLOSED_EVENT_MESSAGE = (
@@ -96,14 +97,17 @@ TEHRAN_EVENT_MESSAGE = (
 )
 
 ESFAHAN_EVENT_MESSAGE = (
-    "اولین مهدکودک‌بزرگترهای زوجی اصفهان\n\n"
-    "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون میخواد کنار پارتنرشون کم بچگی کنن\n\n"
+    "مهدکودک‌بزرگترها اصفهان\n\n"
+    "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
     "📅زمان:\n"
-    "جمعه، ۶ شهریور ۱۴۰۵\n"
+    "پنجشنبه، ۱۹ شهریور ۱۴۰۵\n"
     "ساعت ۱۷ تا ۲۰\n\n"
     "📍مکان: \n"
     "کودکستان و پیش دبستانی باغ طوبی، خیابان دانشگاه\n\n"
-    "☁️ هزینه برای هر زوج: یک میلیون و نهصد هزارتومان"
+    "☁️ هزینه: ۹۸۰ هزارتومان\n\n"
+    "🔸شرایط ثبت نام با تخفیف:\n"
+    "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
+    "نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
 )
 
 SHIRAZ_EVENT_MESSAGE = (
@@ -133,11 +137,17 @@ TEHRAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر 
 {CARD_NUMBER}
 به نام {CARD_OWNER}"""
 
-ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر مبلغ رو واریز کن:
+ESFAHAN_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
 
-هزینه برای هر زوج: یک میلیون و نهصد هزارتومان
+یک نفر : 980 هزارتومان
+دونفر : 1.862 هزارتومان
+سه نفر: 2.744 هزارتومان
+چهار نفر: 3.626 هزارتومان
+پنج نفر: 4.508 هزارتومان
+و...
 
-📤 حالا مبلغ رو به این شماره کارت واریز کن و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
+📤 حالا مبلغ رو به این شماره کارت واریز کن
+و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
 
 {CARD_NUMBER}
 به نام {CARD_OWNER}
@@ -151,6 +161,35 @@ SHIRAZ_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر 
 سه نفر: 4.340 هزارتومان
 چهار نفر: 5.735 هزارتومان
 پنج نفر: 7.130 هزارتومان
+و...
+
+📤 حالا مبلغ رو به این شماره کارت واریز کن
+و فیش واریزت رو به همراه اسم و شماره تماس و تعداد نفرات همینجا بفرست:
+
+{CARD_NUMBER}
+به نام {CARD_OWNER}
+
+💥 راستی، ارسال فیش به معنای قبول کردن قوانین استرداده پس اگه دوست داشتی، یه سر به قوانینمون بزن🫠"""
+
+MASHHAD_EVENT_MESSAGE = (
+    "اولین مهدکودک‌بزرگترهای مشهد\n\n"
+    "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون می‌خواد یه کم بچگی کنن\n\n"
+    "📅زمان:\n"
+    "جمعه، ۲۰ شهریور ۱۴۰۵\n\n"
+    "📍مکان: کوثر شمالی ۱، خانه کودک بانی شاد\n\n"
+    "☁️ هزینه: ۸۵۰ هزارتومان\n\n"
+    "🔸شرایط ثبت نام با تخفیف:\n"
+    "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
+    "نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
+)
+
+MASHHAD_RECEIPT_MESSAGE = f"""📝 لطفا قبل از ادامه‌ی مسیر هزینه‌ی رویداد رو براساس تعداد نفرات مشخص کن:
+
+یک نفر : 850 هزارتومان
+دونفر : 1.615 هزارتومان
+سه نفر: 2.380 هزارتومان
+چهار نفر: 3.145 هزارتومان
+پنج نفر: 3.910 هزارتومان
 و...
 
 📤 حالا مبلغ رو به این شماره کارت واریز کن
@@ -391,7 +430,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             ]
-            await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(MASHHAD_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("mashhad"))
 
@@ -456,7 +495,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("بازگشت", callback_data="session_mashhad")],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         ]
-        await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text(MASHHAD_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == "start_receipt_rasht":
         context.user_data["ready_for_receipt"] = "rasht"

@@ -38,7 +38,8 @@ DB_FILE = "databases.json"
 
 registration_status = {
     "esfahan": False,
-    "tehran": False,
+    "tehran_thu": False,
+    "tehran_fri": False,
     "shiraz": False,
     "mashhad": False,
     "rasht": False,
@@ -56,6 +57,14 @@ CITY_DISPLAY_NAMES = {
 
 CITY_NAME_TO_KEY = {v: k for k, v in CITY_DISPLAY_NAMES.items()}
 
+SESSION_DISPLAY_NAMES = {
+    "tehran_thu": "تهران (پنجشنبه، ۲۶ شهریور)",
+    "tehran_fri": "تهران (جمعه، ۲۷ شهریور)",
+}
+
+def event_label(key: str) -> str:
+    return SESSION_DISPLAY_NAMES.get(key) or CITY_DISPLAY_NAMES.get(key, key)
+
 DB_ACTION_LABELS = {
     "set": "📥 تنظیم دیتابیس (جایگزینی)",
     "add": "➕ افزودن به دیتابیس",
@@ -71,7 +80,8 @@ STOP_COLLECT_LABEL = "⏹ پایان جمع‌آوری"
 # ------------------------- پیام‌های آماده -------------------------
 
 DYNAMIC_CONFIRM_DAY = {
-    "tehran": "پنجشنبه",
+    "tehran_thu": "پنجشنبه",
+    "tehran_fri": "جمعه",
     "esfahan": "پنجشنبه",
     "shiraz": "جمعه",
     "mashhad": "جمعه",
@@ -85,7 +95,7 @@ CLOSED_EVENT_MESSAGE = (
     "برای دریافت اخبار یا اطلاعات هم یادت نره که حتما به کانالمون سر بزنی✨"
 )
 
-TEHRAN_EVENT_MESSAGE = (
+TEHRAN_THU_EVENT_MESSAGE = (
     "مهدکودک‌بزرگترها تهران\n\n"
     "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
     "📅زمان:\n"
@@ -97,6 +107,26 @@ TEHRAN_EVENT_MESSAGE = (
     "🔸شرایط ثبت نام با تخفیف:\n"
     "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
     "نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
+)
+
+TEHRAN_FRI_EVENT_MESSAGE = (
+    "مهدکودک‌بزرگترها تهران\n\n"
+    "👫مخاطب رویداد: بزرگسالان ۱۸ سال به بالا که دلشون یه کم بچگی می‌خواد\n\n"
+    "📅زمان:\n"
+    "جمعه، ۲۷ شهریور ۱۴۰۵\n"
+    "ساعت ۱۷ الی ۲۰\n\n"
+    "📍مکان: \n"
+    "محدوده اندرزگو، باغچه کودکی هم‌صدا\n\n"
+    "☁️ هزینه: یک میلیون و ششصد و پنجاه هزارتومان\n\n"
+    "🔸شرایط ثبت نام با تخفیف:\n"
+    "به ازای هر دوستی که همراه با خودتون بیارید ۱۰٪ تخفیف همراهی از ما می‌گیرید.\n\n"
+    "نگران تنها اومدن هم نباشید؛ ما اینجا همه باهم دوست میشیم :)"
+)
+
+TEHRAN_THU_CLOSED_MESSAGE = (
+    "🌱 خیلی ممنون از توجه و علاقه‌ای که به مهدکودک‌بزرگترها تهران نشون دادید 🙏\n\n"
+    "ظرفیت سانس پنجشنبه (۲۶ شهریور) تکمیل شده و دیگه امکان ثبت‌نام توش نیست.\n\n"
+    "اگه دوست دارید بیاید، سانس جمعه (۲۷ شهریور) رو هم می‌تونید چک کنید، شاید اونجا جا داشته باشیم😊"
 )
 
 ESFAHAN_EVENT_MESSAGE = (
@@ -312,8 +342,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🔓 باز کردن اصفهان", callback_data="open_esfahan"),
         ])
         keyboard.append([
-            InlineKeyboardButton("🔒 بستن تهران", callback_data="close_tehran"),
-            InlineKeyboardButton("🔓 باز کردن تهران", callback_data="open_tehran"),
+            InlineKeyboardButton("🔒 بستن تهران (پنجشنبه)", callback_data="close_tehran_thu"),
+            InlineKeyboardButton("🔓 باز کردن تهران (پنجشنبه)", callback_data="open_tehran_thu"),
+        ])
+        keyboard.append([
+            InlineKeyboardButton("🔒 بستن تهران (جمعه)", callback_data="close_tehran_fri"),
+            InlineKeyboardButton("🔓 باز کردن تهران (جمعه)", callback_data="open_tehran_fri"),
         ])
         keyboard.append([
             InlineKeyboardButton("🔒 بستن شیراز", callback_data="close_shiraz"),
@@ -367,6 +401,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "event_kindergarten":
         def city_status(city):
+            if city == "tehran":
+                return "✅ " if (registration_status["tehran_thu"] or registration_status["tehran_fri"]) else ""
             return "✅ " if registration_status[city] else ""
 
         keyboard = [
@@ -389,16 +425,44 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("✨ کدوم شهرو می‌خوای شرکت کنی؟", reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == "session_tehran":
-        context.user_data["city"] = "تهران"
-        if registration_status["tehran"]:
+        thu_check = "✅ " if registration_status["tehran_thu"] else ""
+        fri_check = "✅ " if registration_status["tehran_fri"] else ""
+        keyboard = [
+            [InlineKeyboardButton(f"{thu_check}پنجشنبه، ۲۶ شهریور", callback_data="session_tehran_thu")],
+            [InlineKeyboardButton(f"{fri_check}جمعه، ۲۷ شهریور", callback_data="session_tehran_fri")],
+            [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
+            [InlineKeyboardButton("پشتیبانی", callback_data="support")],
+            [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")],
+        ]
+        await query.edit_message_text("✨ کدوم سانس تهران رو می‌خوای؟", reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == "session_tehran_thu":
+        if registration_status["tehran_thu"]:
             keyboard = [
-                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data="start_receipt_tehran")],
-                [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data="start_receipt_tehran_thu")],
+                [InlineKeyboardButton("بازگشت", callback_data="session_tehran")],
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             ]
-            await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(TEHRAN_THU_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
-            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("tehran"))
+            keyboard = [
+                [InlineKeyboardButton("بررسی سانس جمعه", callback_data="session_tehran_fri")],
+                [InlineKeyboardButton("بازگشت", callback_data="session_tehran")],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+                [InlineKeyboardButton("ورود به کانال", url=f"https://t.me/{CHANNEL_USERNAME}")],
+            ]
+            await query.edit_message_text(TEHRAN_THU_CLOSED_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == "session_tehran_fri":
+        if registration_status["tehran_fri"]:
+            keyboard = [
+                [InlineKeyboardButton("نهایی کردن ثبت‌نام", callback_data="start_receipt_tehran_fri")],
+                [InlineKeyboardButton("بازگشت", callback_data="session_tehran")],
+                [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+            ]
+            await query.edit_message_text(TEHRAN_FRI_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+        else:
+            await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("tehran_fri"))
 
     elif query.data == "session_esfahan":
         context.user_data["city"] = "اصفهان"
@@ -444,7 +508,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             ]
-            await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(TEHRAN_THU_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("rasht"))
 
@@ -456,15 +520,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("بازگشت", callback_data="event_kindergarten")],
                 [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
             ]
-            await query.edit_message_text(TEHRAN_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(TEHRAN_THU_EVENT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=closed_event_keyboard("yazd"))
 
-    elif query.data == "start_receipt_tehran":
-        context.user_data["ready_for_receipt"] = "tehran"
+    elif query.data == "start_receipt_tehran_thu":
+        context.user_data["ready_for_receipt"] = "tehran_thu"
         keyboard = [
-            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_tehran")],
-            [InlineKeyboardButton("بازگشت", callback_data="session_tehran")],
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_tehran_thu")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_tehran_thu")],
+            [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
+        ]
+        await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data == "start_receipt_tehran_fri":
+        context.user_data["ready_for_receipt"] = "tehran_fri"
+        keyboard = [
+            [InlineKeyboardButton("🧸 قوانین استرداد", callback_data="rules_tehran_fri")],
+            [InlineKeyboardButton("بازگشت", callback_data="session_tehran_fri")],
             [InlineKeyboardButton("پشتیبانی", url=f"https://t.me/{SUPPORT_USERNAME}")],
         ]
         await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -518,22 +591,22 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(TEHRAN_RECEIPT_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data.startswith("rules_"):
-        current_city = query.data.split("_")[1]
+        current_city = query.data.split("_", 1)[1]
         keyboard = [
             [InlineKeyboardButton("بازگشت به نهایی کردن ثبت‌نام", callback_data=f"start_receipt_{current_city}")]
         ]
         await query.edit_message_text(REFUND_RULES_MESSAGE, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data.startswith("open_") or query.data.startswith("close_"):
-        city = query.data.split("_")[1]
+        city = query.data.split("_", 1)[1]
         registration_status[city] = query.data.startswith("open")
         state = "باز شد ✅" if registration_status[city] else "بسته شد ❌"
-        await query.edit_message_text(f"ثبت‌نام برای {city} {state}", reply_markup=support_back_channel("start"))
+        await query.edit_message_text(f"ثبت‌نام برای {event_label(city)} {state}", reply_markup=support_back_channel("start"))
 
     elif query.data.startswith("notify_"):
         city_key = query.data.split("_", 1)[1]
         context.user_data["notify_city"] = city_key
-        city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
+        city_name = event_label(city_key)
 
         await query.edit_message_text(CLOSED_EVENT_MESSAGE, reply_markup=support_back_channel("event_kindergarten"))
 
@@ -564,7 +637,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data.startswith("confirm_"):
         parts = query.data.split("_")
         user_id = int(parts[1])
-        city = parts[2] if len(parts) > 2 else None
+        city = "_".join(parts[2:]) if len(parts) > 2 else None
         event_day = DYNAMIC_CONFIRM_DAY.get(city, "رویداد پیش‌رو")
 
         confirmation_text = (
@@ -628,7 +701,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     user_id = user.id
 
-    sender_info = f"از طرف {user.full_name} (@{user.username or 'بدون نام کاربری'})\nآیدی عددی: {user_id}"
+    sender_info = f"از طرف {user.full_name} (@{user.username or 'بدون نام کاربری'})\nآیدی عددی: {user_id}\nسانس: {event_label(city)}"
     full_caption = f"{sender_info}\n\nکپشن:\n{caption}"
 
     confirm_buttons = InlineKeyboardMarkup(
@@ -662,7 +735,7 @@ async def contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     contact = update.message.contact
     user = update.message.from_user
-    city_name = CITY_DISPLAY_NAMES.get(city_key, city_key)
+    city_name = event_label(city_key)
     full_name = f"{contact.first_name or ''} {contact.last_name or ''}".strip()
 
     admin_text = (
